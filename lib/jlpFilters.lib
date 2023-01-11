@@ -1,0 +1,51 @@
+ma = library("maths.lib");
+ba = library("basics.lib");
+ro = library("routes.lib");
+de = library("delays.lib");
+an = library("analyzers.lib");
+ef = library("misceffects.lib");
+si = library("signals.lib");
+fi = library("filters.lib"); // for compatible copy/paste out of this file
+
+declare name "JLP Filters Library";
+declare author "Jean-Loup Pecquais";
+declare license "GPL3"; 
+
+allpass(c) = fi.tf22(1,0,-c,0,-1/c)*((1-(1/c))/(1-c));
+
+allpassn(cs) = seq(i, order, allpass(cs : ba.selectn(order,i)))
+with
+{
+    order = ba.count(cs);
+};
+
+//HILBERT TRANSFORM IMPLEMENTATION
+
+// TODO : PHASE LINEAR HILBERT
+//linPhaseRotator(phi) = _ : an.rtocv(1) : an.fft(2) : ^(2), ^(2) : + : sqrt;
+
+/*
+Hilbert transform allows to generate two output signals with a constant phase shift of 90°.
+First signal is say to be at 0° phase shift, while the second one is at 90°.
+This implementation use a network of allpass filter, so the "0°" signal is not in-phase with the input signal.
+If you want to use it for phase alignment, this filter should be applied on all the correlated sources.
+*/
+
+hilbert(k) = (allpassn(c1s) : mem), allpassn(c2s)
+with
+{
+    c1s = par(i,k,exp(ma.PI/2^(2*i)));
+    c2s = par(i,k,exp(ma.PI/2^(2*i-1)));
+};
+
+//VARIABLE ORDER HIGHPASS
+/*
+Simple wrapper to create a variable highpass filter.
+N is the order of the filter.
+maxN is the maximal order that the filter can took.
+fc is the cut-off frequency.
+*/
+
+highpassN(N,maxN,fc) = ba.bypass1(fc==0, ba.bypass1(N%2==0,fi.highpass(1,f))) : seq(i, maxN/2, ba.bypass1(2*(i+1)>N,fi.highpass(2,f))) with {
+    f = select2(fc>20,20,fc);
+};

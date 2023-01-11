@@ -7,4 +7,4 @@ import("stdfaust.lib");
 
 sigVariation = fi.conv((1,-1)); //Allows to compute de derivation of the input signal
 
-process = abs : sigVariation : *(10);
+process = sigVariation : abs : *(10);

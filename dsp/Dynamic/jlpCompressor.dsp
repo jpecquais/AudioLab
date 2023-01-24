@@ -70,6 +70,7 @@ RMS_compression_gain_N_chan2(strength,thresh,att,rel,hld,rms,knee,prePost,link,N
   par(i, N, RMS_compression_gain_mono2(strength,thresh,att,rel,knee,prePost))
   <:(si.bus(N),(ba.parallelMin(N)<:si.bus(N))):ro.interleave(N,2):par(i,N,(it.interpolate_linear(link)));
 
+//TODO : FORCE FEEDFORWARD WHEN LAH IS ON
 RMS_FBFFcompressor_N_chan2(strength,thresh,att,rel,hld,rms,knee,lad,prePost,link,FBFF,meter,N) =
   si.bus(N) <: si.bus(N*2):
   (
@@ -82,7 +83,6 @@ RMS_FBFFcompressor_N_chan2(strength,thresh,att,rel,hld,rms,knee,lad,prePost,link
     )~si.bus(N)
   );
 
-//TODO : FORCE FEEDFORWARD WHEN LAH IS ON
 process = RMS_FBFFcompressor_N_chan2(strength,thresh,att,rel,hld,rms,knee,lad,prePost,0,1,meter,1)
 with{
     strength = hslider("Strenght", 0, 0, 1, 0.01);

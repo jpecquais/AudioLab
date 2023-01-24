@@ -82,6 +82,7 @@ RMS_FBFFcompressor_N_chan2(strength,thresh,att,rel,hld,rms,knee,lad,prePost,link
     )~si.bus(N)
   );
 
+//TODO : FORCE FEEDFORWARD WHEN LAH IS ON
 process = RMS_FBFFcompressor_N_chan2(strength,thresh,att,rel,hld,rms,knee,lad,prePost,0,1,meter,1)
 with{
     strength = hslider("Strenght", 0, 0, 1, 0.01);

@@ -50,7 +50,7 @@ with {
 // TODO : TO BE IMPLEMENTED IN A PROPER LIB
 // TODO : RENAMING FUNCTIONS NAME
 RMS_compression_gain_mono2(strength,thresh,att,hld,rel,rms,knee,prePost) =
-  fi.highpass(4,10) : RMS(rms): ba.linear2db : gain_computer(strength,thresh,knee) : ba.db2linear <: *(ahr(att,hld,rel,loThresh)) 
+  fi.highpass(4,10) : RMS(rms) : ba.linear2db <: ( gain_computer(strength,thresh,knee) : ba.db2linear), ahr(att,hld,rel,loThresh) : * 
 with {
     gate = 1;
     loThresh = thresh-(knee/2);

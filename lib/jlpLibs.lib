@@ -1,0 +1,9 @@
+/*
+#########################################
+##          LOAD ALL JLP LIBS          ##
+#########################################
+*/
+
+jlpEnv = library("jlpEnvelop.lib");
+jlpFi = library("lib/jlpFilters.lib");
+jlpDyn = library("lib/jlpDynamics.lib");

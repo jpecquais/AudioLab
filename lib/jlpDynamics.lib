@@ -5,6 +5,7 @@ de = library("delays.lib");
 an = library("analyzers.lib");
 ef = library("misceffects.lib");
 si = library("signals.lib");
+it = library("interpolators.lib");
 fi = library("filters.lib"); // for compatible copy/paste out of this file
 
 // Custom Lib
@@ -31,7 +32,7 @@ A knee is also configurable. It make the ratio (strenght) dependent on the input
 
 */
 
-comp_genericGainComputer(strength,thresh,att,hld,rel,rms,knee,prePost) =
+comp_genericGainComputer(strength,thresh,att,hld,rel,rms,knee) =
   fi.highpass(4,10) : RMS(rms) : ba.linear2db <: ( gain_computer(strength,thresh,knee) : ba.db2linear), jlpEnv.ahr(att,hld,rel,loThresh) : * 
 with {
     gate = 1;
@@ -45,9 +46,9 @@ with {
   	RMS(time) = ba.slidingRMS(s) with { s = ba.sec2samp(time):int:max(1); };
 };
 
-comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,prePost,link,1) =
-  comp_genericGainComputer(strength,thresh,att,rel,hld,rms,knee,prePost);
+comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,1) =
+  comp_genericGainComputer(strength,thresh,att,rel,hld,rms,knee);
 
-comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,prePost,link,N) =
-  par(i, N, comp_genericGainComputer(strength,thresh,att,rel,knee,prePost))
+comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,N) =
+  par(i, N, (si.bus(1) <: comp_genericGainComputer(strength,thresh,att,rel,knee)))
   <:(si.bus(N),(ba.parallelMin(N)<:si.bus(N))):ro.interleave(N,2):par(i,N,(it.interpolate_linear(link)));

@@ -23,71 +23,16 @@ comp_BigBrother_nCh(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) 
 
 
 
-
-
-
-
 comp_HybridComp_nCh(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) =
-  si.bus(N) <: si.bus(N*2) :(jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,0.005,knee,0,N),_) : 
+  si.bus(N) <: si.bus(N*2) : 
   (
     (
-      (( ro.interleave(N,2) :  par(i, N, it.interpolate_linear(FBFF))),si.bus(N))
+      (( (jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,0.005,knee,0,N),jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,N)) : ro.interleave(N,2) :  par(i, N, it.interpolate_linear(FBFF))),si.bus(N))
       : (ro.interleave(N,2) : par(i,N,meter*@(max(0,floor(0.5+ma.SR*lad)))))
-    )~(si.bus(N) <: jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,N))
+    )~si.bus(N)
   );
   
-
-
-
-
-
-comp_HybridComp_nCh2(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) =
-  si.bus(N) <: si.bus(N*2) :
-  (
-    (
-      ((jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,0.005,knee,0,N)),si.bus(N))
-      : (ro.interleave(N,2) : par(i,N,meter*@(max(0,floor(0.5+ma.SR*lad)))))
-    )
-  );
-
-
-
-
-comp_HybridComp_nCh3(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) =
-  si.bus(N) : 
-  (
-    (
-      (si.bus(N),si.bus(N))
-      : (ro.interleave(N,2) : par(i,N,meter*@(max(0,floor(0.5+ma.SR*lad)))))
-    )~(si.bus(N) <: jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,N))
-  );
-  
-
-
-
-
-
-FBFFcompressor(strength,thresh,att,rel,knee,prePost,link,FBFF,meter,N) =
-  si.bus(N) <: si.bus(N*2) :
-  (
-    ((par(i,2,co.peak_compression_gain_N_chan_db(strength,thresh,att,rel,knee,prePost,link,N)) : ro.interleave(N,2) : par(i,N,it.interpolate_linear(FBFF))),si.bus(N))
-    : (ro.interleave(N,2) : par(i,N,(meter : ba.db2linear)*_))
-  )
-  ~ si.bus(N);
-
-
-
-
-
-
-
-
-
-//process = jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,0.005,knee,0,2)
-//process = co.peak_compression_gain_N_chan_db(strength,thresh,att,rel,knee,0,0,2)
-//process = jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,0,2)
-process = comp_HybridComp_nCh2(strength,thresh,att,rel,hld,rms,knee,lad,0,1,meter,2)
-//process = FBFFcompressor(strength,thresh,att,rel,knee,0,1,1,meter,2)
+process = comp_HybridComp_nCh(strength,thresh,att,rel,hld,rms,knee,lad,0,1,meter,2)
 with{
     strength = hslider("Strenght", 0, 0, 1, 0.01);
     thresh = hslider("Threshold", 0, -96, 0, 0.1);

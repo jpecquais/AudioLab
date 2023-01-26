@@ -46,9 +46,9 @@ with {
   	RMS(time) = ba.slidingRMS(s) with { s = ba.sec2samp(time):int:max(1); };
 };
 
-comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,1) =
+comp_genericGainComputer_nCh(strength,thresh,att,hld,rel,rms,knee,link,1) =
   comp_genericGainComputer(strength,thresh,att,rel,hld,rms,knee);
 
-comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,N) =
-  par(i, N, (si.bus(1) <: comp_genericGainComputer(strength,thresh,att,rel,knee)))
+comp_genericGainComputer_nCh(strength,thresh,att,hld,rel,rms,knee,link,N) =
+  par(i, N, comp_genericGainComputer(strength,thresh,att,rel,hld,rms,knee))
   <:(si.bus(N),(ba.parallelMin(N)<:si.bus(N))):ro.interleave(N,2):par(i,N,(it.interpolate_linear(link)));

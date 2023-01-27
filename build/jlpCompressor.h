@@ -316,7 +316,7 @@ class mydsp : public dsp {
 			float fTemp0 = float(input0[i0]);
 			fVec0[IOTA0 & 32767] = fTemp0;
 			fRec8[0] = fTemp0 - fConst11 * (fConst10 * fRec8[2] + fConst5 * fRec8[1]);
-			fRec7[0] = fConst11 * (fConst12 * fRec8[1] + fConst4 * fRec8[0] + fConst4 * fRec8[2]) - fConst9 * (fConst7 * fRec7[2] + fConst5 * fRec7[1]);
+			fRec7[0] = fConst11 * (fConst4 * fRec8[0] + fConst12 * fRec8[1] + fConst4 * fRec8[2]) - fConst9 * (fConst7 * fRec7[2] + fConst5 * fRec7[1]);
 			float fTemp1 = fConst12 * fRec7[1] + fConst4 * fRec7[0] + fConst4 * fRec7[2];
 			fVec1[0] = fTemp1;
 			fVec2[0] = 0.0f - fConst20 * (fConst22 * fRec5[1] - fConst21 * fVec1[1]);

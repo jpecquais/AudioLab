@@ -25,6 +25,15 @@ comp_BigBrother_nCh(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) 
 
 
 comp_HybridComp_nCh(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) =
+  si.bus(N) <: si.bus(N*2) : 
+  (
+    (
+      (( (jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,0.005,knee,0,N),jlpDyn.comp_genericGainComputer_nCh(strength,thresh,att,rel,hld,rms,knee,link,N)) : ro.interleave(N,2) :  par(i, N, it.interpolate_linear(FBFF))),si.bus(N))
+      : (ro.interleave(N,2) : par(i,N,meter*delay(lad)))
+    )~si.bus(N)
+  );
+
+comp_HybridComp_nCh2(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) =
   si.bus(N) <: si.bus(N*2) : ((si.bus(N) <: si.bus(N*2)),(jlpDyn.crestFactorComputer_nCh(rms,link,N))):(si.bus(N*2),si.block(N)) : 
   (
     (
@@ -32,6 +41,7 @@ comp_HybridComp_nCh(strength,thresh,att,rel,hld,rms,knee,lad,link,FBFF,meter,N) 
       : (ro.interleave(N,2) : par(i,N,meter*delay(lad)))
     )~si.bus(N)
   );
+
   
 process = comp_HybridComp_nCh(strength,thresh,att,rel,hld,rms,knee,lad,0,1,meter,1)
 //process = jlpDyn.crestFactorComputer_nCh(1,0,0,2)

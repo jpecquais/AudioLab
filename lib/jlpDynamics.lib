@@ -32,8 +32,21 @@ A knee is also configurable. It make the ratio (strenght) dependent on the input
 
 */
 
+RMS(time) = ba.slidingRMS(s) with { s = ba.sec2samp(time):int:max(1); };
+
+crestFactorComputer(rms,x) = x <: (abs, RMS(rms)) : - ;
+
+crestFactorComputer_nCh(rms,link,1,x) =
+  crestFactorComputer(rms,x);
+
+crestFactorComputer_nCh(rms,link,N,x) =
+  par(i, N, crestFactorComputer(rms,x))
+  <:(si.bus(N),(ba.parallelMin(N)<:si.bus(N))):ro.interleave(N,2):par(i,N,(it.interpolate_linear(link)));
+
+
+
 comp_genericGainComputer(strength,thresh,att,hld,rel,rms,knee) =
-  fi.highpass(4,10) : RMS(rms) : ba.linear2db <: ( gain_computer(strength,thresh,knee) : ba.db2linear), jlpEnv.ahr(att,hld,rel,loThresh) : * 
+  fi.highpass(4,10) : fi.itu_r_bs_1770_4_kfilter : RMS(rms) : ba.linear2db <: ( gain_computer(strength,thresh,knee) : ba.db2linear), jlpEnv.ahr(att,hld,rel,loThresh) : * 
 with {
     gate = 1;
     loThresh = thresh-(knee/2);
@@ -43,7 +56,7 @@ with {
                 ((level-thresh+(knee/2)):pow(2)/(2*knee)),
                 (level-thresh)
                 ) : max(0)*-strength;
-  	RMS(time) = ba.slidingRMS(s) with { s = ba.sec2samp(time):int:max(1); };
+  	//RMS(time) = ba.slidingRMS(s) with { s = ba.sec2samp(time):int:max(1); };
 };
 
 comp_genericGainComputer_nCh(strength,thresh,att,hld,rel,rms,knee,link,1) =

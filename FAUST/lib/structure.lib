@@ -1,0 +1,60 @@
+/*
+@name: Feedback libraries
+@author: Jean-Loup Pecquais
+*/
+
+import("stdfaust.lib");
+
+/*
+Routing function helper
+*/
+routing = environment{
+    interleave(N) = par(i,N,_) : route(N,N,par(i,N,(i+1,to(i+1)))) with {
+        to(i_plus_one) = ((2*i+(i_plus_one>N/2))%(N))+1 with {
+            i = i_plus_one-1;
+        };
+    };
+
+    rotate(N) = route(N,N,par(i,N,(i+1,next(i+1)))) with {
+            next(i) = (i%N)+1;
+    };
+
+    stereo_rotate(N) = route(N,N,par(i,N,(i+1,route_to(i+1)))) with {
+        is_odd(n) = n%2;
+        route_to(i) = ba.selector(is_odd(i),2,(i-((i-1)/2),i+1+((N-i)/2)));
+    };
+
+    sum_and_split(N) = sum(i,N,_) : /(N) <: si.bus(N);
+};
+
+/*
+Feedback designs
+This environnement defines some feedback structure.
+
+Audio input must have the same number of channel as "N".
+main and parallel must be processing of N channels to. Use par primitive to expand single channel instructions.
++ *main* define the basic structure
++ *parallel* is simply parallel feedback loop with no connections between them.
++ *chain* is a structure where the feedback path of the loop N goes to the input of the loop N+1. The feedback path of loop N-1 goes to loop 0
++ *summed* is a structure where all the feedback path are summed together and then redistributed to all the loops.
+*/
+feedback = environment {
+    structure(N,loop_route,main,loop) = (routing.interleave(2*N) : par(i,N,(+)):main)~(loop:loop_route);
+    parallel(N,main,loop) = structure(N,si.bus(N),main,loop);
+    chain(N,main,loop) = structure(N,routing.rotate(N),main,loop);
+    summed(N,main,loop) = structure(N,routing.sum_and_split(N),main,loop);
+};
+
+forward = environment {
+    structure(N,direct_route,main,direct) = si.bus(N) <: (main,(direct : direct_route)) : routing.interleave(2*N) : par(i,N,+);  
+    parallel(N,main,direct) = structure(N,si.bus(N),main,direct);
+    chain(N,main,direct) = structure(N,routing.rotate(N),main,direct);
+    summed(N,main,loop) = structure(N,routing.sum_and_split(N),main,loop);
+};
+
+back_and_forth = environment {
+    structure(N,direct_route,loop_route,main,direct,loop) = (routing.interleave(2*N):par(i,N,+)<: si.bus(2*N):(main,(direct:direct_route)))~(loop:loop_route):routing.interleave(2*N):par(i,N,+);
+    parallel(N,main,direct,loop) = structure(N,si.bus(N),si.bus(N),main,direct,loop);
+    feedback_chain(N,main,direct,loop) = structure(N,si.bus(N),routing.rotate(N),main,direct,loop);
+    feedback_summed(N,main,direct,loop) = structure(N,si.bus(N),routing.sum_and_split(N),main,direct,loop);
+};

@@ -1,0 +1,17 @@
+/*
+@name: Effects libraries
+@author: Jean-Loup Pecquais
+*/
+
+import("stdfaust.lib");
+import("filter.lib");
+
+///////////////////////////////////////////
+/*
+Hilbert Modulator:
+Amplitude and frequency modulation using an hilbert transform
+lfo : A time varying signal is expected here, varying between -1 and 1. Greater bounds will create the effect of a twice faster period in the lfo.
+blend : 0 is 100% dry. 1 is 100% vibrato effect. Intermediate values creates amplitude modulation effect.
+sig: signal to be processed
+*/
+hilbert_modulator(lfo,blend,sig) = sig <: ((hilbert : (*(1-blend),!)),phase_rotator(lfo*ma.PI)*(blend)) : + ;

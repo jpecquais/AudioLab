@@ -1,9 +1,9 @@
-# FAUST Lab Repository
+# AudioLab - DSP things
 
-This repository host generic FAUST .lib and .dsp file, mainly for plugin building purpose.
+This repository store many of the little projects and things I've investigated. It also serve as my own DSP library (for the better and the worst!).
 
-## Example of terminal command to build a .dsp file
+## File structure
 
-    faust -a tools/faustMinimal.h -O build -svg dsp/Dynamic/jlpCompressor.dsp -o jlpCompressor.h
-
-This command create a .h file and the SVG diagram (very useful to debug) in the build folder.
++ The **cpp** folder contain C++ codes, classes and functions.
++ The **faust** folder contain Faust codes and modules
++ The **python** folder contain research script and filter desing stuff.

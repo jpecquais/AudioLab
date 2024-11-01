@@ -1,0 +1,11 @@
+
+import("stdfaust.lib");
+
+diffusor = environment {
+
+    allpass_struct(gain,core,x) = +(core(x)-gain*x)~(*(gain));
+
+    allpass(max_del,del,gain,x) = allpass_struct(gain,de.delay(max_del,del),x);
+    allpass_nested(max_del1,del1,max_del2,del2,g1,g2,x) = allpass_struct(g1,de.fdelay(max_del1,del1):allpass(max_del2,del2,g2),x);
+
+};

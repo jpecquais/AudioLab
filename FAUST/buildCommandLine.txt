@@ -1,1 +1,0 @@
-faust -i -a tools/faustMinimal.h dsp/Filters/phaseRotator.dsp -o build/phaseRotator.h

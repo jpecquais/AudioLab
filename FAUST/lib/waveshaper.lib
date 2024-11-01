@@ -1,0 +1,16 @@
+/*
+@name: Waveshaping library
+@author: Jean-Loup Pecquais
+*/
+
+xlim(coefficient,x) = (2*x/(coefficient*(abs(x)+1)));
+
+xlim_dyn(x) = xlim(coefficient(x),x)~_ with{
+    coefficient(x,y) = 1+abs(y/(x+1e-14));
+};
+
+powerxlim(power,x) = (pow(2,1/power)*x/(pow(abs(x),power)+1));
+
+powerxlim_dyn(x) = powerxlim(power(x),x)~_ with{
+    power(x,y) = 1+abs(y/(x+1e-14));
+};

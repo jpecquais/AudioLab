@@ -12,12 +12,14 @@ if __name__ == "__main__":
 
     if "-to" in sys.argv:
         output_format = sys.argv[sys.argv.index("-to") + 1]
+    if "-o" in sys.argv:
+        common_output_path = sys.argv[sys.argv.index("-o") + 1]
 
     # Create the appropriate build object based on the output format
     if output_format == "cpp":
         build_obj = CppBuild(common_output_path+"cpp")
     elif output_format == "jsfx":
-        build_obj = JsfxBuild(common_output_path+"build/jsfx/Effects")
+        build_obj = JsfxBuild(common_output_path+"jsfx/Effects")
     else:
         raise ValueError(f"Unsupported output format: {output_format}")
 

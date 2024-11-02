@@ -1,4 +1,8 @@
-# Automated-Guitar Amplifier Modelling
+# Model training
+
+Original code is at : https://github.com/GuitarML/Automated-GuitarAmpModelling.git
+
+
 
 ## GuitarML Fork
 This fork adds Colab Training, wav file pre-processing, results plotting, and some helpful printouts during training.

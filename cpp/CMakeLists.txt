@@ -17,14 +17,5 @@ set_target_properties(AudioLab PROPERTIES PUBLIC
 target_include_directories(AudioLab PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}/Source
   PRIVATE
-  # "Source"
-  # "Source/Control"
-  # "Source/Drums"
-  # "Source/Dynamics"
-  # "Source/Effects"
   "Filters"
-  # "Source/Noise"
-  # "Source/PhysicalModeling"
-  # "Source/Synthesis"
-  # "Source/Utility"
   )

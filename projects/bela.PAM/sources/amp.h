@@ -1,5 +1,5 @@
 #include "models.h"
-#include "../libs/RTNeural-main/RTNeural/RTNeural.h"
+#include <libraries/RTNeural-main/RTNeural/RTNeural.h>
 
 template <class T, int hiddenSize>
 class Amp{

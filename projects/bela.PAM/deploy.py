@@ -8,47 +8,56 @@ from pathlib import Path
 from fabric import Connection, task
 
 # Define paths and constants
-PROJECT_ROOT = Path('.')
+PROJECT_ROOT = Path('./') #TODO: directory of this script!
 DSP_FOLDER = PROJECT_ROOT / 'dsp'
 SOURCE_FOLDER = PROJECT_ROOT / 'sources'
-BELA_IP = 'bela.local'
+LIBRARY_FOLDER = PROJECT_ROOT/'../../cpp'
+BELA_IP = '192.168.7.2'
 BELA_USER = 'root'
-BELA_LIBRARY_PATH = '/libraries/audiolab'
-BELA_PROJECT_PATH = '/project/bela.PAM'
+BELA_LIBRARY_PATH = 'Bela/libraries/AudioLab'
+BELA_PROJECT_PATH = 'Bela/projects/bela.PAM'
+
+def send_folder_to_bela(folder_path, destination_path, c, exclude=None):
+    exclude_option = f"--exclude={exclude}" if exclude else ""
+    rsync_command = f"rsync -avz {exclude_option} {folder_path}/ {BELA_USER}@{BELA_IP}:{destination_path}"
+    c.local(rsync_command)
+
 
 # Function to transpile FAUST code
 def transpile_faust():
     for faust_file in DSP_FOLDER.glob('*.dsp'):
-        cpp_path = SOURCE_FOLDER / faust_file.with_suffix('.cpp').name
-        subprocess.run(['faust', '-o', str(cpp_path), str(faust_file)])
+        cpp_path = SOURCE_FOLDER / faust_file.with_suffix('.h').name
+        subprocess.run(['faust', '-a', '../../faust/tools/faustMinimalInlined.h', '-o', str(cpp_path), "-cn", faust_file.stem, str(faust_file)])
 
 # Function to update audiolab library on Bela
 @task
 def update_audiolab_lib(c):
     # Check if the audiolab folder exists, create it if it doesn't
-    c.run(f'mkdir -p {BELA_LIBRARY_PATH}')
-    c.put(str(PROJECT_ROOT / 'audiolab'), BELA_LIBRARY_PATH, mirror_local_mode=True)
+    send_folder_to_bela(LIBRARY_FOLDER,BELA_LIBRARY_PATH,c)
 
 # Function to copy project code to Bela, excluding FAUST code
 @task
 def copy_project_code(c):
-    for file in PROJECT_ROOT.rglob('*'):
-        if DSP_FOLDER in file.parents or file.is_dir():
-            continue
-
-        relative_path = file.relative_to(PROJECT_ROOT)
-        remote_path = Path(BELA_PROJECT_PATH) / relative_path
-
-        remote_dir = remote_path.parent
-        c.run(f'mkdir -p {remote_dir}')
-        c.put(str(file), str(remote_path), mirror_local_mode=True)
+    send_folder_to_bela(PROJECT_ROOT, BELA_PROJECT_PATH, c, exclude='.venv')
 
 # Main function to execute the tasks
 def main():
     transpile_faust()
 
     # Establish connection to Bela
-    c = Connection(host=BELA_IP, user=BELA_USER)
+    c = Connection(host=BELA_IP, user=BELA_USER, port = 22, connect_kwargs={'password': ''})
+
+    if not c.run(f'test -d {BELA_LIBRARY_PATH}', warn=True).ok:
+        c.run(f'mkdir -p {BELA_LIBRARY_PATH}')
+    else:
+        c.run(f'rm -rf {BELA_LIBRARY_PATH}')
+        c.run(f'mkdir -p {BELA_LIBRARY_PATH}')
+
+    if not c.run(f'test -d {BELA_PROJECT_PATH}', warn=True).ok:
+        c.run(f'mkdir -p {BELA_PROJECT_PATH}')
+    else:
+        c.run(f'rm -rf {BELA_PROJECT_PATH}')
+        c.run(f'mkdir -p {BELA_PROJECT_PATH}')
 
     # Execute tasks
     update_audiolab_lib(c)

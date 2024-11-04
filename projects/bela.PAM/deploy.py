@@ -18,8 +18,10 @@ BELA_LIBRARY_PATH = 'Bela/libraries/AudioLab'
 BELA_PROJECT_PATH = 'Bela/projects/bela.PAM'
 
 def send_folder_to_bela(folder_path, destination_path, c, exclude=None):
-    exclude_option = f"--exclude={exclude}" if exclude else ""
-    rsync_command = f"rsync -avz {exclude_option} {folder_path}/ {BELA_USER}@{BELA_IP}:{destination_path}"
+    exclude_options = ''
+    if exclude:
+        exclude_options = ' '.join(f"--exclude={pattern}" for pattern in exclude)
+    rsync_command = f"rsync -avz {exclude_options} {folder_path}/ {BELA_USER}@{BELA_IP}:{destination_path}"
     c.local(rsync_command)
 
 
@@ -38,7 +40,8 @@ def update_audiolab_lib(c):
 # Function to copy project code to Bela, excluding FAUST code
 @task
 def copy_project_code(c):
-    send_folder_to_bela(PROJECT_ROOT, BELA_PROJECT_PATH, c, exclude='.venv')
+    exclude_list = ['.venv', 'dsp', 'training']  # Add more patterns as needed 
+    send_folder_to_bela(PROJECT_ROOT, BELA_PROJECT_PATH, c, exclude=exclude_list)
 
 # Main function to execute the tasks
 def main():

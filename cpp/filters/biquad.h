@@ -58,6 +58,8 @@ class TBiquad
         std::copy(std::begin(coefficients)+2,std::end(coefficients),std::begin(m_b));
     }
 
+    virtual T process(T &x) = 0;
+
     protected:
     std::array<T,3> m_a,m_b;
 };

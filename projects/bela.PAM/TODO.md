@@ -12,4 +12,4 @@
 
 - [ ] - Rotary effect emulation
 
-## Done
+## Done:

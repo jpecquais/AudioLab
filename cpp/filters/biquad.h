@@ -83,12 +83,9 @@ class Biquad<T, TF2> : public TBiquad<T>
 
     T process(T& x)
     {
-        T w0 = this->m_b[0] * x + this->m_w1;
-        this->m_w1 = this->m_b[1] * x - this->m_a[1] * w0 + this->m_w2;
-        this->m_w2 = this->m_b[2] * x - this->m_a[2] * w0;
-
-        this->m_w2 = this->m_w1;
-        this->m_w1 = w0;
+        T w0 = this->m_b[0] * x + m_w1;
+        m_w1 = this->m_b[1] * x - this->m_a[1] * w0 + m_w2;
+        m_w2 = this->m_b[2] * x - this->m_a[2] * w0;
 
         return w0;
     }

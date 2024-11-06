@@ -21,6 +21,7 @@ class InputSection{
         const int num_allpasses_1 = 2;
         const int num_allpasses_2 = 3;
 
+        //TODO: Filtering is broken
         for (int i=0;i<num_allpasses_1;i++){
             in1 = biquads[i].process(in1);
             in2 = biquads[i+num_allpasses_1].process(in2);
@@ -43,16 +44,11 @@ class InputSection{
     std::array<audiolab::Biquad<T,audiolab::TF2>,NUM_2O_ALLPASSES> biquads;
 
     void initAllpassesParameters(){
-        allpassesParameters[0].fc = 42; //Hz
-        allpassesParameters[0].bw = 1.5; //Octave
-        allpassesParameters[1].fc = 595;
-        allpassesParameters[1].bw = 2;
-        allpassesParameters[2].fc = 50;
-        allpassesParameters[2].bw = 1.5;
-        allpassesParameters[3].fc = 732;
-        allpassesParameters[3].bw = 2;
-        allpassesParameters[4].fc = 21150;
-        allpassesParameters[4].bw = 3.7;
+        allpassesParameters[0] = {42, 1.5}; // Hz, Octave
+        allpassesParameters[1] = {595, 2};
+        allpassesParameters[2] = {50, 1.5};
+        allpassesParameters[3] = {732, 2};
+        allpassesParameters[4] = {21150, 3.7};
     }
 
     void computeBiquadCoefficients(){

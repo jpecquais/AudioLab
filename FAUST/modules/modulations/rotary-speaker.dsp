@@ -1,3 +1,9 @@
+/*
+TODO-List
+- [ ] - Fix fast rotary sound
+- [ ] - Ramp should be linear and not exponential
+*/
+
 declare name "Rototor";
 declare author "Jean-Loup Pecquais";
 declare copyright "MyCompany";

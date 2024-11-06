@@ -10,9 +10,10 @@
 #include "sources/MidiController.h"
 
 //Debug mode
-#define DEBUG
+// #define DEBUG
 #ifdef DEBUG
 	#include <libraries/Oscillator/Oscillator.h>
+	#include <libraries/Scope/Scope.h>
 #endif
 
 //Constant Declaration
@@ -35,6 +36,7 @@ float **theBuffer; //TODO: should be refactorized with smart pointer.
 //Instanciation of main dsp objects
 #ifdef DEBUG
 	Oscillator osc;
+	Scope scope;
 #endif
 InputSection<float, 44100> theInputSection;
 Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
@@ -58,6 +60,7 @@ bool setup(BelaContext *context, void *userData)
 		osc.setup(context->audioSampleRate, Oscillator::sine);
 		osc.setFrequency(440);
 		osc.setPhase(0);
+		scope.setup(2, context->audioSampleRate);
 	#endif
 
 	theMidiController.setup("hw:1,0,0");
@@ -89,7 +92,7 @@ void render(BelaContext *context, void *userData)
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(audioRead(context, n, CHANNEL::LEFT),
 				  												  audioRead(context, n, CHANNEL::RIGHT));
 		#else
-			theBuffer[CHANNEL::LEFT][n] = osc.process()*0.25; //TODO: sine generator
+			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //TODO: sine generator
 		#endif
 		// Power Amp Simulation
 		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN; // Rest of signal chain is linear, so output gain can be applied here.
@@ -98,6 +101,9 @@ void render(BelaContext *context, void *userData)
 	theCabinet.process(theBuffer[0], theBuffer[0], context->audioFrames);
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		#ifdef DEBUG
+			scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::LEFT][n]);
+		#endif
 		audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]);
 		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::LEFT][n]); // Should be the right channel in theBuffer.
 	}

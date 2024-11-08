@@ -1113,7 +1113,7 @@ class PamRotaryEffect : public dsp {
 			fRec33[0] = 0.83774f * (fRec33[1] - fRec34[1]) + fVec18[1] + 0.06338f * fRec34[0];
 			fRec32[0] = fRec33[0];
 			fRec36[0] = fConst10 * std::sin(fTemp23) + fConst11 * fRec36[1];
-			output1[i0] = FAUSTFLOAT(fRec22[0] + fSlow11 * fRec27[0] + fSlow1 * (fRec27[0] * fRec31[0] + fRec32[0] * fRec36[0]));
+			output1[i0] = FAUSTFLOAT(fSlow1 * (fRec27[0] * fRec31[0] + fRec32[0] * fRec36[0]) + fRec22[0] + fSlow11 * fRec27[0]);
 			iVec0[1] = iVec0[0];
 			fRec10[1] = fRec10[0];
 			fRec9[1] = fRec9[0];

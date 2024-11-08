@@ -10,7 +10,7 @@
 #include "sources/MidiController.h"
 
 //Debug mode
-// #define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 	#include <libraries/Oscillator/Oscillator.h>
 	#include <libraries/Scope/Scope.h>
@@ -101,12 +101,13 @@ void render(BelaContext *context, void *userData)
 	// Linear Speaker Simulation
 	theCabinet.process(theBuffer[0], theBuffer[0], context->audioFrames);
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
+
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		#ifdef DEBUG
-			scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::LEFT][n]);
+			scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
 		#endif
 		audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]);
-		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::LEFT][n]); // Should be the right channel in theBuffer.
+		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]); // Should be the right channel in theBuffer.
 	}
 }
 

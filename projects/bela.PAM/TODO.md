@@ -2,17 +2,18 @@
 
 ## Backlogs:
 
+- [ ] - Optimized impulse response length to limit CPU usage.
 - [ ] - Remove samplerate template from InputSection class.
 - [ ] - Create an AudioBuffer class.
 
 ## Working on:
 
 - [ ] - Add MIDI support
-- [ ] - Test input section implementation
-  - Seems to work: there's signal at the output
 
 ## Done:
 
+- [x] - Test input section implementation
+  - Seems to work: there's signal at the output
 - [x] - Rotary effect emulation
 - [x] - Add python code for deconvolution
 - [x] - Python script for pushing code to Bela

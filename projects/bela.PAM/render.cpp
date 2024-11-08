@@ -24,6 +24,7 @@ const int 			CONSTABLE_POLARITY 			= -1;
 const float 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12)*BLACKBIRD_POLARITY;
 const float 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0)*CONSTABLE_POLARITY;
 const float 		OUTPUT_GAIN 				= db2linear<float>(-12);
+const int 			MIDI_CH						= 5;
 
 enum CHANNEL{
 	LEFT = 0,

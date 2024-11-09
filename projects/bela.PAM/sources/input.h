@@ -4,13 +4,15 @@
 
 const int NUM_2O_ALLPASSES = 5;
 
-template <class T, int SamplingRate>
+template <class T>
 class InputSection{
     public:
     InputSection() = default;
     ~InputSection() = default;
 
-    void setup(T t_gainIn1, T t_gainIn2){
+    void setup(T fs, T t_gainIn1, T t_gainIn2){
+        m_fs = fs;
+        m_ts = 1./fs;
         m_gainIn1 = t_gainIn1;
         m_gainIn2 = t_gainIn2;
         initAllpassesParameters();
@@ -34,6 +36,7 @@ class InputSection{
         return in1*m_gainIn1+in2*m_gainIn2;
     }
     private:
+    T m_fs, m_ts;
     T m_gainIn1;
     T m_gainIn2;
     struct AllpassParameters{
@@ -52,14 +55,13 @@ class InputSection{
     }
 
     void computeBiquadCoefficients(){
-        T ts = 1./SamplingRate;
         for (int i=0; i<NUM_2O_ALLPASSES; i++){
             T fc = allpassesParameters[i].fc; 
             T bw = allpassesParameters[i].bw;
             bw = std::abs(fc*std::pow<T>(2,bw)-fc);
 
-            T r = std::exp(-PI*bw*ts);
-            T theta = 2*PI*fc*ts;
+            T r = std::exp(-PI*bw*m_ts);
+            T theta = 2*PI*fc*m_ts;
 
             T alpha = r*r;
             T beta = -2*r*std::cos(theta);

@@ -38,7 +38,7 @@ float **theBuffer; //TODO: should be refactorized with smart pointer.
 	Oscillator osc;
 	Scope scope;
 #endif
-InputSection<float, 44100> theInputSection;
+InputSection<float> theInputSection;
 Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 PamRotaryEffect theRotary;
 
@@ -72,7 +72,7 @@ bool setup(BelaContext *context, void *userData)
 	theMidiController.attachParameterToCC(outputGain,7);
 
 	//Init dsp blocks
-	theInputSection.setup(BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
+	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
 	theAmp.setup();
 	theRotary.init(context->audioSampleRate);
 	theBuffer = new float*[CHANNEL::STEREO];

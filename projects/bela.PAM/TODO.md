@@ -8,11 +8,11 @@
 ## Working on:
 
 - [ ] - Add MIDI support
-- [ ] - Optimized impulse response length to limit CPU usage.
-  - [ ] Solution: integrate the speaker sound inside the neural network modal
 
 ## Done:
 
+- [x] - Optimized impulse response length to limit CPU usage.
+  - [x] Solution: integrate the speaker sound inside the neural network modal
 - [x] - Test input section implementation
   - Seems to work: there's signal at the output
 - [x] - Rotary effect emulation

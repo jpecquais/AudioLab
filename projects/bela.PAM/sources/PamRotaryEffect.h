@@ -810,9 +810,9 @@ class PamRotaryEffect : public dsp {
 	
 	virtual void instanceResetUserInterface() {
 		fHslider0 = FAUSTFLOAT(5e+01f);
-		fHslider1 = FAUSTFLOAT(1.0f);
-		fHslider2 = FAUSTFLOAT(7.0f);
-		fHslider3 = FAUSTFLOAT(0.0f);
+		fHslider1 = FAUSTFLOAT(0.0f);
+		fHslider2 = FAUSTFLOAT(1.0f);
+		fHslider3 = FAUSTFLOAT(7.0f);
 		fHslider4 = FAUSTFLOAT(0.0f);
 		fHslider5 = FAUSTFLOAT(6.0f);
 		fHslider6 = FAUSTFLOAT(5e+01f);
@@ -1005,13 +1005,13 @@ class PamRotaryEffect : public dsp {
 	
 	virtual void buildUserInterface(UI* ui_interface) {
 		ui_interface->openVerticalBox("PamRotaryEffect");
-		ui_interface->addHorizontalSlider("break", &fHslider4, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
-		ui_interface->addHorizontalSlider("fast_rotation_speed", &fHslider2, FAUSTFLOAT(7.0f), FAUSTFLOAT(4.0f), FAUSTFLOAT(1e+01f), FAUSTFLOAT(0.1f));
+		ui_interface->addHorizontalSlider("break", &fHslider1, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
+		ui_interface->addHorizontalSlider("fast_rotation_speed", &fHslider3, FAUSTFLOAT(7.0f), FAUSTFLOAT(4.0f), FAUSTFLOAT(1e+01f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("mic_distance", &fHslider0, FAUSTFLOAT(5e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("mix", &fHslider6, FAUSTFLOAT(5e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("ramp_time", &fHslider5, FAUSTFLOAT(6.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(2e+01f), FAUSTFLOAT(0.1f));
-		ui_interface->addHorizontalSlider("slow_fast", &fHslider3, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
-		ui_interface->addHorizontalSlider("slow_rotation_speed", &fHslider1, FAUSTFLOAT(1.0f), FAUSTFLOAT(0.1f), FAUSTFLOAT(4.0f), FAUSTFLOAT(0.01f));
+		ui_interface->addHorizontalSlider("slow_fast", &fHslider4, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
+		ui_interface->addHorizontalSlider("slow_rotation_speed", &fHslider2, FAUSTFLOAT(1.0f), FAUSTFLOAT(0.1f), FAUSTFLOAT(4.0f), FAUSTFLOAT(0.01f));
 		ui_interface->closeBox();
 	}
 	
@@ -1021,11 +1021,11 @@ class PamRotaryEffect : public dsp {
 		FAUSTFLOAT* output1 = outputs[1];
 		float fSlow0 = 1.0f - 0.01f * float(fHslider0);
 		float fSlow1 = 0.5f * std::min<float>(1.0f, std::max<float>(0.0f, fSlow0));
-		float fSlow2 = float(fHslider1);
+		float fSlow2 = float(fHslider2);
 		float fSlow3 = float(fHslider5);
 		int iSlow4 = std::fabs(fSlow3) < 1.1920929e-07f;
 		float fSlow5 = ((iSlow4) ? 0.0f : std::exp(-(fConst5 / ((iSlow4) ? 1.0f : fSlow3))));
-		float fSlow6 = fSlow2 * std::pow(float(fHslider2) / fSlow2, float(fHslider3)) * (1.0f - float(fHslider4)) * (1.0f - fSlow5);
+		float fSlow6 = (1.0f - float(fHslider1)) * fSlow2 * std::pow(float(fHslider3) / fSlow2, float(fHslider4)) * (1.0f - fSlow5);
 		float fSlow7 = 1.414f * std::pow(1e+01f, 0.15f * fSlow0);
 		float fSlow8 = 0.01f * float(fHslider6);
 		float fSlow9 = std::sqrt(fSlow8);
@@ -1085,7 +1085,7 @@ class PamRotaryEffect : public dsp {
 			fRec18[0] = 0.83774f * (fRec18[1] - fRec19[1]) + fVec10[1] + 0.06338f * fRec19[0];
 			fRec17[0] = fRec18[0];
 			fRec21[0] = fConst10 * std::sin(fTemp19) + fConst11 * fRec21[1];
-			fRec26[0] = -(fConst7 * (fConst8 * fRec26[1] - (fTemp6 + fVec1[1])));
+			fRec26[0] = -(fConst7 * (fConst8 * fRec26[1] - (fVec1[1] + fTemp6)));
 			float fTemp20 = fRec26[0] + fSlow10 * fRec13[0];
 			fVec11[0] = fTemp20;
 			fVec12[0] = 0.260502f * fRec24[1] + fVec11[1];

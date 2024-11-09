@@ -2,13 +2,14 @@
 
 ## Backlogs:
 
-- [ ] - Optimized impulse response length to limit CPU usage.
 - [ ] - Remove samplerate template from InputSection class.
 - [ ] - Create an AudioBuffer class.
 
 ## Working on:
 
 - [ ] - Add MIDI support
+- [ ] - Optimized impulse response length to limit CPU usage.
+  - [ ] Solution: integrate the speaker sound inside the neural network modal
 
 ## Done:
 

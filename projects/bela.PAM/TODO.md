@@ -2,7 +2,6 @@
 
 ## Backlogs:
 
-- [ ] - Remove samplerate template from InputSection class.
 - [ ] - Create an AudioBuffer class.
 
 ## Working on:
@@ -11,6 +10,7 @@
 
 ## Done:
 
+- [x] - Remove samplerate template from InputSection class.
 - [x] - Optimized impulse response length to limit CPU usage.
   - [x] Solution: integrate the speaker sound inside the neural network modal
 - [x] - Test input section implementation

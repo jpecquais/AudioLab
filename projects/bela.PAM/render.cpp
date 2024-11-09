@@ -62,7 +62,7 @@ bool setup(BelaContext *context, void *userData)
 		scope.setup(2, context->audioSampleRate);
 	#endif
 
-	theMidiController.setup("hw:1,0,0");
+	theMidiController.setup("hw:1,0,0",MIDI_CH);
 	//Attach parameter to MidiControler
 	theMidiController.attachParameterToCC(slowRotationSpeed,0);
 	theMidiController.attachParameterToCC(fastRotationSpeed,1);

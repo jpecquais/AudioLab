@@ -16,6 +16,22 @@ class Parameter{
         return m_value;
     }
 
+    T getMaximum(){
+        return m_max;
+    }
+
+    T getMinimum(){
+        return m_min;
+    }
+
+    T getDefault(){
+        return m_default;
+    }
+
+    void setValueFromMidi(int t_value){
+        setValue(((t_value/127.)*(m_max-m_min))+m_min);
+    }
+
     protected:
     std::string m_name;
     T m_value, m_min, m_max, m_default;

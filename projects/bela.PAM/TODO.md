@@ -3,6 +3,7 @@
 ## Backlogs:
 
 - [ ] - Create an AudioBuffer class.
+  - [ ] - FIXME: Double ressources release with current C pointer implementation.
 
 ## Working on:
 

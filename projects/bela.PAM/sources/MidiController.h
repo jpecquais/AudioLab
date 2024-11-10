@@ -25,7 +25,7 @@ class MidiController{
         m_midi.readFrom(t_midiPort.c_str());
         m_midi.writeTo(t_midiPort.c_str());
         m_midi.enableParser(true);
-        m_midi.setParserCallback(callback, (void *)t_midiPort.c_str());
+        m_midi.setParserCallback(&callback, (void *)t_midiPort.c_str());
         m_midiChannel = t_midiChannel;
     }
 
@@ -33,17 +33,14 @@ class MidiController{
         m_ccMessages[t_cc].reset(&t_parameter);
     }
     
-    private:
-    void callback(){
-        while(m_midi.getParser()->numAvailableMessages()>0){
-            MidiChannelMessage message = m_midi.getParser()->getNextChannelMessage();
-            if (message.getChannel() != m_midiChannel) return;
-            if (message.getType() == kmmControlChange){
-                &m_ccMessages[message.getDataByte(0)]->setValueFromMidi(message.getDataByte(1));
-            }
-        }
+    static void callback(MidiChannelMessage message, void *arg){
+        // if (message.getChannel() != m_midiChannel) return;
+        // if (message.getType() == kmmControlChange){
+        //     &m_ccMessages[message.getDataByte(0)]->setValueFromMidi(message.getDataByte(1));
+        // }
     }
 
+    private:
     Midi m_midi;
     int m_midiChannel;
     std::array<std::unique_ptr<Parameter<T>>,128> m_ccMessages;

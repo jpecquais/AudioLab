@@ -10,13 +10,9 @@
 namespace audiolab
 {
 
-using fType = float;
-template<size_t size>
-using fArray = std::array<fType,size>;
-
 /** Biquad cell filter
  * takes 5 coefficient to be set. (a0 is always 1)
- * 
+ *
  * Author : Jean-Loup Pecquais
 */
 
@@ -29,6 +25,7 @@ typedef enum{
 
 /** TBiquad class implement generic behavior for subsequent Biquad form implementation
 */
+template <class T>
 class TBiquad
 {
     public:
@@ -37,82 +34,88 @@ class TBiquad
 
     /** Initializes the biquad module.
     */
-    void Init()
+    void init()
     {
-        a_[0] = 1;
-        a_[1] = a_[2] = b_[0] = b_[1] = b_[2] = 0;
+        m_a[0] = 1;
+        m_a[1] = m_a[2] = m_b[0] = m_b[1] = m_b[2] = 0;
     }
     /** Set coefficients of the Biquad filter.
      * \param a1, a2, b0, b1, b2 - The coefficients of the filter
      * OR
      * \param std::array<float> coefficients - Array of five coefficients (a1,a2,b0,b1,b2)
     */
-    inline void SetCoefficients(fType a1, fType a2, fType b0, fType b1, fType b2)
+    inline void set(T b0, T b1, T b2, T a1, T a2)
     {
-        a_[1]=a1;
-        a_[2]=a2;
-        b_[0]=b0;
-        b_[1]=b1;
-        b_[2]=b2;
+        m_a[1]=a1;
+        m_a[2]=a2;
+        m_b[0]=b0;
+        m_b[1]=b1;
+        m_b[2]=b2;
     }
-    inline void SetCoefficients(fArray<5> coefficients)
+    inline void set(std::array<T,5> coefficients)
     {
-        std::copy(std::begin(coefficients),std::begin(coefficients)+1,std::begin(a_)+1);
-        std::copy(std::begin(coefficients)+2,std::end(coefficients),std::begin(b_));
+        std::copy(std::begin(coefficients),std::begin(coefficients)+1,std::begin(m_a)+1);
+        std::copy(std::begin(coefficients)+2,std::end(coefficients),std::begin(m_b));
     }
+
+    virtual T process(T &x) = 0;
 
     protected:
-    fArray<3> a_,b_;
+    std::array<T,3> m_a,m_b;
 };
 
-template <BiquadForm form>
-class Biquad : public TBiquad
+template <class T, BiquadForm form>
+class Biquad : public TBiquad<T>
 {
+    public:
     Biquad() = default;
     ~Biquad() = default;
 };
 
-template <>
-class Biquad<TF2> : public TBiquad
+template <class T>
+class Biquad<T, TF2> : public TBiquad<T>
 {
     /** Transposed Form 2 implementation of the Biquad. Should be used on floating point architecture.
     */
     public:
-    float Process(float x)
-    {
-        float w0 = b_[0] * x + w1_;
-        w1_ = b_[1] * x - a_[1] * w0 + w2_;
-        w2_ = b_[2] * x - a_[2] * w0;
+    Biquad() = default;
+    ~Biquad() = default;
 
-        w2_ = w1_;
-        w1_ = w0;
+    T process(T& x)
+    {
+        T w0 = this->m_b[0] * x + m_w1;
+        m_w1 = this->m_b[1] * x - this->m_a[1] * w0 + m_w2;
+        m_w2 = this->m_b[2] * x - this->m_a[2] * w0;
 
         return w0;
     }
 
     private:
-    fType w1_{0},w2_{0};
+    T m_w1{0}, m_w2{0};
 };
 
-template <>
-class Biquad<DF1> : public TBiquad
+template <class T>
+class Biquad<T, DF1> : public TBiquad<T>
 {
     /** Direct Form 1 implementation of the Biquad. Should be used on fixed point architecture
     */
     public:
-    float Process(float x)
+    Biquad() = default;
+    ~Biquad() = default;
+
+    T process(T& x)
     {
-        float y = (b_[0] * x + b_[1] * x1_ + b_[2] * x2_ - a_[1] * y1_ - a_[2] * y2_);
-        x2_ = x1_;
-        x1_ = x;
-        y2_ = y1_;
-        y1_ = y;
+        T y = (this->m_b[0] * x + this->m_b[1] * this->x1_ + this->m_b[2] * this->x2_ - this->m_a[1] * this->y1_ - this->m_a[2] * this->y2_);
+        this->x2_ = this->x1_;
+        this->x1_ = x;
+        this->y2_ = this->y1_;
+        this->y1_ = y;
 
         return y;
     }
 
     private:
-    fType x1_{0},x2_{0},y1_{0},y2_{0};
+    T x1_{0}, x2_{0}, y1_{0}, y2_{0};
 };
 
 }// End of audiolab namespace

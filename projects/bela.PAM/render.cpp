@@ -1,5 +1,6 @@
 #include <memory>
 #include <Bela.h>
+#include <libraries/Convolver/Convolver.h>
 #include <libraries/AudioFile/AudioFile.h>
 #include "sources/math.h"
 #include "sources/amp.h"
@@ -18,6 +19,7 @@
 //Constant Declaration
 const int 			NEURAL_NETWORK_HIDDEN_SIZE  = 8;
 const std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
+const unsigned int	MAX_IMPULSE_LENGTH			= 256;
 const int 			BLACKBIRD_POLARITY 			= 1;
 const int 			CONSTABLE_POLARITY 			= -1;
 const float 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12)*BLACKBIRD_POLARITY;
@@ -40,6 +42,7 @@ float **theBuffer; //TODO: should be refactorized with smart pointer.
 #endif
 InputSection<float> theInputSection;
 Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
+Convolver theCabinet;
 PamRotaryEffect theRotary;
 
 //Define "UI"
@@ -74,6 +77,7 @@ bool setup(BelaContext *context, void *userData)
 	//Init dsp blocks
 	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
 	theAmp.setup();
+	theCabinet.setup(IMPULSE_RESPONSE_PATH, context->audioFrames, MAX_IMPULSE_LENGTH);
 	theRotary.init(context->audioSampleRate);
 	theBuffer = new float*[CHANNEL::STEREO];
 	for (int i = 0; i < CHANNEL::STEREO; i++) {
@@ -96,6 +100,7 @@ void render(BelaContext *context, void *userData)
 		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN; // Rest of signal chain is linear, so output gain can be applied here.
 	}
 	// Linear Speaker Simulation
+	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {

@@ -18,7 +18,7 @@
 
 //Constant Declaration
 const int 			NEURAL_NETWORK_HIDDEN_SIZE  = 8;
-const std::string	MIDI_PORT					= "hw:1,0,0";
+const std::string	MIDI_PORT					= "hw:0,0,0";
 const std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
 const unsigned int	MAX_IMPULSE_LENGTH			= 256;
 const int 			BLACKBIRD_POLARITY 			= 1;
@@ -47,7 +47,7 @@ Convolver theCabinet;
 PamRotaryEffect theRotary;
 
 //Define "UI"
-std::shared_ptr<MapUI> theUI;
+std::shared_ptr<MapUI> theUI(new MapUI);
 Parameter<float> outputGain("OutputGain",1.,0.,1.);
 FAUSTParameter<float> mix(theUI,"mix",50.,0.,100.);
 FAUSTParameter<float> slowFastMode(theUI,"slow_fast",0,1,0);
@@ -101,7 +101,7 @@ void render(BelaContext *context, void *userData)
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //TODO: sine generator
 		#endif
 		// Power Amp & Speaker Simulation
-		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN; // Rest of signal chain is linear, so output gain can be applied here.
+		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN*outputGain.getValue(); // Rest of signal chain is linear, so output gain can be applied here.
 	}
 	// Linear Speaker Simulation
 	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
@@ -125,10 +125,19 @@ void cleanup(BelaContext *context, void *userData)
 }
 
 void midiCallback(MidiChannelMessage message, void *arg){
+	#ifdef DEBUG
+		rt_printf("MIDI Channel: %i \n",message.getChannel());
+	#endif
 	if (message.getChannel() != MIDI_CH) return;
 	if (message.getType() == kmmControlChange){
+		#ifdef DEBUG
+			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
+		#endif
 		std::unique_ptr<IParameter<float>>& currParam = ccToParameters[message.getDataByte(0)];
-		if (currParam == nullptr) return;
-		currParam->setValueFromMidi(message.getDataByte(1));
+		if (currParam.get() == nullptr) return;
+		#ifdef DEBUG
+			rt_printf("Is a valid CC\n");
+		#endif
+		currParam.get()->setValueFromMidi(message.getDataByte(1));
 	}
 }

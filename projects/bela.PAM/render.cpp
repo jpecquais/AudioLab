@@ -2,12 +2,12 @@
 #include <Bela.h>
 #include <libraries/Convolver/Convolver.h>
 #include <libraries/AudioFile/AudioFile.h>
+#include <libraries/Midi/Midi.h>
 #include "sources/math.h"
 #include "sources/amp.h"
 #include "sources/input.h"
 #include "sources/PamRotaryEffect.h"
 #include "sources/Parameter.h"
-#include "sources/MidiController.h"
 
 //Debug mode
 //#define DEBUG
@@ -18,6 +18,7 @@
 
 //Constant Declaration
 const int 			NEURAL_NETWORK_HIDDEN_SIZE  = 8;
+const std::string	MIDI_PORT					= "hw:1,0,0";
 const std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
 const unsigned int	MAX_IMPULSE_LENGTH			= 256;
 const int 			BLACKBIRD_POLARITY 			= 1;
@@ -47,14 +48,15 @@ PamRotaryEffect theRotary;
 
 //Define "UI"
 std::shared_ptr<MapUI> theUI;
-MidiController<float> theMidiController;
 Parameter<float> outputGain("OutputGain",1.,0.,1.);
-FAUSTParameter<float> slowRotationSpeed(theUI,"slow_rotation_speed",1.,0.1,4.);
-FAUSTParameter<float> fastRotationSpeed(theUI,"fast_rotation_speed",7.,4.,10.);
 FAUSTParameter<float> mix(theUI,"mix",50.,0.,100.);
 FAUSTParameter<float> slowFastMode(theUI,"slow_fast",0,1,0);
 FAUSTParameter<float> breakMode(theUI,"break",0,1,0);
 
+//Define MIDI
+Midi theMidi;
+std::array<std::unique_ptr<IParameter<float>>,128> ccToParameters;
+void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -65,14 +67,16 @@ bool setup(BelaContext *context, void *userData)
 		scope.setup(2, context->audioSampleRate);
 	#endif
 
-	theMidiController.setup("hw:1,0,0",MIDI_CH);
+	theMidi.readFrom(MIDI_PORT.c_str());
+	theMidi.writeTo(MIDI_PORT.c_str());
+	theMidi.enableParser(true);
 	//Attach parameter to MidiControler
-	theMidiController.attachParameterToCC(slowRotationSpeed,0);
-	theMidiController.attachParameterToCC(fastRotationSpeed,1);
-	theMidiController.attachParameterToCC(mix,2);
-	theMidiController.attachParameterToCC(slowFastMode,3);
-	theMidiController.attachParameterToCC(breakMode,4);
-	theMidiController.attachParameterToCC(outputGain,7);
+	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
+	//Bind parameters to midi CC number.
+	ccToParameters[0].reset(&mix);
+	ccToParameters[1].reset(&slowFastMode);
+	ccToParameters[2].reset(&breakMode);
+	ccToParameters[7].reset(&outputGain);
 
 	//Init dsp blocks
 	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
@@ -118,4 +122,13 @@ void cleanup(BelaContext *context, void *userData)
 		delete[] theBuffer[i];
 	}
 	delete[] theBuffer;
+}
+
+void midiCallback(MidiChannelMessage message, void *arg){
+	if (message.getChannel() != MIDI_CH) return;
+	if (message.getType() == kmmControlChange){
+		std::unique_ptr<IParameter<float>>& currParam = ccToParameters[message.getDataByte(0)];
+		if (currParam == nullptr) return;
+		currParam->setValueFromMidi(message.getDataByte(1));
+	}
 }

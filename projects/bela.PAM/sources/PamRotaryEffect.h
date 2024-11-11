@@ -1085,14 +1085,14 @@ class PamRotaryEffect : public dsp {
 			fRec18[0] = 0.83774f * (fRec18[1] - fRec19[1]) + fVec10[1] + 0.06338f * fRec19[0];
 			fRec17[0] = fRec18[0];
 			fRec21[0] = fConst10 * std::sin(fTemp19) + fConst11 * fRec21[1];
-			fRec26[0] = -(fConst7 * (fConst8 * fRec26[1] - (fTemp6 + fVec1[1])));
+			fRec26[0] = -(fConst7 * (fConst8 * fRec26[1] - (fVec1[1] + fTemp6)));
 			float fTemp20 = fRec26[0] + fSlow10 * fRec13[0];
 			fVec11[0] = fTemp20;
 			fVec12[0] = 0.260502f * fRec24[1] + fVec11[1];
 			fRec25[0] = fVec12[1] - (0.02569f * (fRec25[1] - fVec11[1]) + 0.260502f * fTemp20);
 			fRec24[0] = fRec25[0];
 			fVec13[0] = fRec24[1] - 0.870686f * fRec22[1];
-			fRec23[0] = 1.8685f * (fRec23[1] - fRec24[1]) + 0.870686f * fRec24[0] + fVec13[1];
+			fRec23[0] = 1.8685f * (fRec23[1] - fRec24[1]) + fVec13[1] + 0.870686f * fRec24[0];
 			fRec22[0] = fRec23[0];
 			output0[i0] = FAUSTFLOAT(fSlow1 * (fRec0[0] * fRec16[0] + fRec17[0] * fRec21[0]) + fRec22[0] + fSlow11 * fRec0[0]);
 			float fTemp21 = fRec4[0] + fRec6;

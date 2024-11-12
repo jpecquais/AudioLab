@@ -3,7 +3,6 @@
 ## Backlogs:
 
 - [ ] - Create an AudioBuffer class.
-  - [ ] - FIXME: Double ressources release with current C pointer implementation.
 - [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
 
 ## Working on:
@@ -12,6 +11,8 @@
 
 ## Done:
 
+- [x] - FIXME: Double ressources release with current C pointer implementation.
+  - The issue was not comming from the float** theBuffer but from smart point pointing to address of already instanciated object.
 - [x] - Remove samplerate template from InputSection class.
 - [x] - Optimized impulse response length to limit CPU usage.
   - [!] Solution: integrate the speaker sound inside the neural network modal. DID NOT WORK

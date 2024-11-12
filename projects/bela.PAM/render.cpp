@@ -55,7 +55,7 @@ FAUSTParameter<float> breakMode(&theUI,"break",0,1,0);
 
 //Define MIDI
 Midi theMidi;
-std::array<std::unique_ptr<IParameter<float>>,128> ccToParameters;
+std::array<IParameter<float>*,128> ccToParameters;
 void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
@@ -73,10 +73,10 @@ bool setup(BelaContext *context, void *userData)
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
 	//Bind parameters to midi CC number.
-	ccToParameters[0].reset(&mix);
-	ccToParameters[1].reset(&slowFastMode);
-	ccToParameters[2].reset(&breakMode);
-	ccToParameters[7].reset(&outputGain);
+	ccToParameters[0] = &mix;
+	ccToParameters[1] = &slowFastMode;
+	ccToParameters[2] = &breakMode;
+	ccToParameters[7] = &outputGain;
 
 	//Init dsp blocks
 	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
@@ -135,11 +135,11 @@ void midiCallback(MidiChannelMessage message, void *arg){
 		#ifdef DEBUG
 			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
 		#endif
-		std::unique_ptr<IParameter<float>>& currParam = ccToParameters[message.getDataByte(0)];
-		if (currParam.get() == nullptr) return;
+		auto& currParam = ccToParameters[message.getDataByte(0)];
+		if (currParam == nullptr) return;
 		#ifdef DEBUG
 			rt_printf("Is a valid CC\n");
 		#endif
-		currParam.get()->setValueFromMidi(message.getDataByte(1));
+		currParam->setValueFromMidi(message.getDataByte(1));
 	}
 }

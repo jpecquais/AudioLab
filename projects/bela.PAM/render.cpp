@@ -47,11 +47,11 @@ Convolver theCabinet;
 PamRotaryEffect theRotary;
 
 //Define "UI"
-std::shared_ptr<MapUI> theUI(new MapUI);
+MapUI theUI;
 Parameter<float> outputGain("OutputGain",1.,0.,1.);
-FAUSTParameter<float> mix(theUI,"mix",50.,0.,100.);
-FAUSTParameter<float> slowFastMode(theUI,"slow_fast",0,1,0);
-FAUSTParameter<float> breakMode(theUI,"break",0,1,0);
+FAUSTParameter<float> mix(&theUI,"mix",50.,0.,100.);
+FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0,1,0);
+FAUSTParameter<float> breakMode(&theUI,"break",0,1,0);
 
 //Define MIDI
 Midi theMidi;

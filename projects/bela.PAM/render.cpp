@@ -98,7 +98,7 @@ void render(BelaContext *context, void *userData)
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(audioRead(context, n, CHANNEL::LEFT),
 				  												  audioRead(context, n, CHANNEL::RIGHT));
 		#else
-			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //TODO: sine generator
+			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //sine generator
 		#endif
 		// Power Amp & Speaker Simulation
 		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN*outputGain.getValue(); // Rest of signal chain is linear, so output gain can be applied here.

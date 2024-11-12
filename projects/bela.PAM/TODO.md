@@ -2,6 +2,7 @@
 
 ## Backlogs:
 
+- [ ] - FIXME: FAUSTParameter do not respond to MIDI CC messages.
 - [ ] - Create an AudioBuffer class.
 - [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
 

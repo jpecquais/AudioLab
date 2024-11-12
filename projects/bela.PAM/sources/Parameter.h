@@ -51,7 +51,7 @@ class Parameter : public IParameter<T>{
 template <class T>
 class FAUSTParameter : public IParameter<T>{
     public:
-    FAUSTParameter(std::shared_ptr<MapUI> t_faustUI, std::string t_name, T t_default, T t_min, T t_max) : IParameter<T>(t_name, t_default, t_min, t_max),m_faustUI(t_faustUI){}
+    FAUSTParameter(MapUI* t_faustUI, std::string t_name, T t_default, T t_min, T t_max) : IParameter<T>(t_name, t_default, t_min, t_max),m_faustUI(t_faustUI){}
     ~FAUSTParameter() = default;
 
     void setValue(T t_newVal){
@@ -64,5 +64,5 @@ class FAUSTParameter : public IParameter<T>{
     }
 
     private:
-    std::shared_ptr<MapUI> m_faustUI;
+    MapUI* m_faustUI;
 };

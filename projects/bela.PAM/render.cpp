@@ -120,8 +120,10 @@ void cleanup(BelaContext *context, void *userData)
 {
 	for (int i=0; i<CHANNEL::STEREO;i++){
 		delete[] theBuffer[i];
+		theBuffer[i] = nullptr;
 	}
 	delete[] theBuffer;
+	theBuffer = nullptr;
 }
 
 void midiCallback(MidiChannelMessage message, void *arg){

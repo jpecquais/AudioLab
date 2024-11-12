@@ -23,6 +23,10 @@ class IParameter{
         return m_default;
     }
 
+    std::string& getName(){
+        return m_name;
+    }
+
     void setValueFromMidi(int t_value){
         setValue(((t_value/127.)*(m_max-m_min))+m_min);
     }

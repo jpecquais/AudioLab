@@ -50,8 +50,8 @@ PamRotaryEffect theRotary;
 MapUI theUI;
 Parameter<float> outputGain("OutputGain",1.,0.,1.);
 FAUSTParameter<float> mix(&theUI,"mix",50.,0.,100.);
-FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0,1,0);
-FAUSTParameter<float> breakMode(&theUI,"break",0,1,0);
+FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.,0.,1.);
+FAUSTParameter<float> breakMode(&theUI,"break",0.,0.,1.);
 
 //Define MIDI
 Midi theMidi;
@@ -83,6 +83,7 @@ bool setup(BelaContext *context, void *userData)
 	theAmp.setup();
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, context->audioFrames, MAX_IMPULSE_LENGTH);
 	theRotary.init(context->audioSampleRate);
+	theRotary.buildUserInterface(&theUI);
 	theBuffer = new float*[CHANNEL::STEREO];
 	for (int i = 0; i < CHANNEL::STEREO; i++) {
 		theBuffer[i] = new float[context->audioFrames];

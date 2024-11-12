@@ -2,12 +2,12 @@
 #include <Bela.h>
 #include <libraries/Convolver/Convolver.h>
 #include <libraries/AudioFile/AudioFile.h>
+#include <libraries/Midi/Midi.h>
 #include "sources/math.h"
 #include "sources/amp.h"
 #include "sources/input.h"
 #include "sources/PamRotaryEffect.h"
 #include "sources/Parameter.h"
-#include "sources/MidiController.h"
 
 //Debug mode
 //#define DEBUG
@@ -18,6 +18,7 @@
 
 //Constant Declaration
 const int 			NEURAL_NETWORK_HIDDEN_SIZE  = 8;
+const std::string	MIDI_PORT					= "hw:0,0,0";
 const std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
 const unsigned int	MAX_IMPULSE_LENGTH			= 256;
 const int 			BLACKBIRD_POLARITY 			= 1;
@@ -46,15 +47,16 @@ Convolver theCabinet;
 PamRotaryEffect theRotary;
 
 //Define "UI"
-std::shared_ptr<MapUI> theUI;
-MidiController<float> theMidiController;
+MapUI theUI;
 Parameter<float> outputGain("OutputGain",1.,0.,1.);
-FAUSTParameter<float> slowRotationSpeed(theUI,"slow_rotation_speed",1.,0.1,4.);
-FAUSTParameter<float> fastRotationSpeed(theUI,"fast_rotation_speed",7.,4.,10.);
-FAUSTParameter<float> mix(theUI,"mix",50.,0.,100.);
-FAUSTParameter<float> slowFastMode(theUI,"slow_fast",0,1,0);
-FAUSTParameter<float> breakMode(theUI,"break",0,1,0);
+FAUSTParameter<float> mix(&theUI,"mix",50.,0.,100.);
+FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.,0.,1.);
+FAUSTParameter<float> breakMode(&theUI,"break",0.,0.,1.);
 
+//Define MIDI
+Midi theMidi;
+std::array<IParameter<float>*,128> ccToParameters;
+void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -65,20 +67,23 @@ bool setup(BelaContext *context, void *userData)
 		scope.setup(2, context->audioSampleRate);
 	#endif
 
-	theMidiController.setup("hw:1,0,0",MIDI_CH);
+	theMidi.readFrom(MIDI_PORT.c_str());
+	theMidi.writeTo(MIDI_PORT.c_str());
+	theMidi.enableParser(true);
 	//Attach parameter to MidiControler
-	theMidiController.attachParameterToCC(slowRotationSpeed,0);
-	theMidiController.attachParameterToCC(fastRotationSpeed,1);
-	theMidiController.attachParameterToCC(mix,2);
-	theMidiController.attachParameterToCC(slowFastMode,3);
-	theMidiController.attachParameterToCC(breakMode,4);
-	theMidiController.attachParameterToCC(outputGain,7);
+	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
+	//Bind parameters to midi CC number.
+	ccToParameters[0] = &mix;
+	ccToParameters[1] = &slowFastMode;
+	ccToParameters[2] = &breakMode;
+	ccToParameters[7] = &outputGain;
 
 	//Init dsp blocks
 	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
 	theAmp.setup();
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, context->audioFrames, MAX_IMPULSE_LENGTH);
 	theRotary.init(context->audioSampleRate);
+	theRotary.buildUserInterface(&theUI);
 	theBuffer = new float*[CHANNEL::STEREO];
 	for (int i = 0; i < CHANNEL::STEREO; i++) {
 		theBuffer[i] = new float[context->audioFrames];
@@ -94,10 +99,10 @@ void render(BelaContext *context, void *userData)
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(audioRead(context, n, CHANNEL::LEFT),
 				  												  audioRead(context, n, CHANNEL::RIGHT));
 		#else
-			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //TODO: sine generator
+			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //sine generator
 		#endif
 		// Power Amp & Speaker Simulation
-		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN; // Rest of signal chain is linear, so output gain can be applied here.
+		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN*outputGain.getValue(); // Rest of signal chain is linear, so output gain can be applied here.
 	}
 	// Linear Speaker Simulation
 	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
@@ -116,6 +121,26 @@ void cleanup(BelaContext *context, void *userData)
 {
 	for (int i=0; i<CHANNEL::STEREO;i++){
 		delete[] theBuffer[i];
+		theBuffer[i] = nullptr;
 	}
 	delete[] theBuffer;
+	theBuffer = nullptr;
+}
+
+void midiCallback(MidiChannelMessage message, void *arg){
+	#ifdef DEBUG
+		rt_printf("MIDI Channel: %i \n",message.getChannel());
+	#endif
+	if (message.getChannel() != MIDI_CH) return;
+	if (message.getType() == kmmControlChange){
+		#ifdef DEBUG
+			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
+		#endif
+		auto& currParam = ccToParameters[message.getDataByte(0)];
+		if (currParam == nullptr) return;
+		#ifdef DEBUG
+			rt_printf("Is a valid CC\n");
+		#endif
+		currParam->setValueFromMidi(message.getDataByte(1));
+	}
 }

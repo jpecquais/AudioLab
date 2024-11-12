@@ -30,7 +30,7 @@ def ir_trunc(args):
     ir_data = np.transpose(ir_data)
 
     max_ir_len = len(ir_data)
-    number_iteration = 2
+    number_iteration = 4
 
     for i in range(number_iteration):
         ir_len = max_ir_len//np.power(2,i)

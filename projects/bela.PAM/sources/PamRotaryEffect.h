@@ -810,8 +810,8 @@ class PamRotaryEffect : public dsp {
 	
 	virtual void instanceResetUserInterface() {
 		fHslider0 = FAUSTFLOAT(5e+01f);
-		fHslider1 = FAUSTFLOAT(1.0f);
-		fHslider2 = FAUSTFLOAT(7.0f);
+		fHslider1 = FAUSTFLOAT(0.6f);
+		fHslider2 = FAUSTFLOAT(6.0f);
 		fHslider3 = FAUSTFLOAT(0.0f);
 		fHslider4 = FAUSTFLOAT(0.0f);
 		fHslider5 = FAUSTFLOAT(6.0f);
@@ -1006,12 +1006,12 @@ class PamRotaryEffect : public dsp {
 	virtual void buildUserInterface(UI* ui_interface) {
 		ui_interface->openVerticalBox("PamRotaryEffect");
 		ui_interface->addHorizontalSlider("break", &fHslider4, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
-		ui_interface->addHorizontalSlider("fast_rotation_speed", &fHslider2, FAUSTFLOAT(7.0f), FAUSTFLOAT(4.0f), FAUSTFLOAT(1e+01f), FAUSTFLOAT(0.1f));
+		ui_interface->addHorizontalSlider("fast_rotation_speed", &fHslider2, FAUSTFLOAT(6.0f), FAUSTFLOAT(4.0f), FAUSTFLOAT(1e+01f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("mic_distance", &fHslider0, FAUSTFLOAT(5e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("mix", &fHslider6, FAUSTFLOAT(5e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("ramp_time", &fHslider5, FAUSTFLOAT(6.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(2e+01f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("slow_fast", &fHslider3, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
-		ui_interface->addHorizontalSlider("slow_rotation_speed", &fHslider1, FAUSTFLOAT(1.0f), FAUSTFLOAT(0.1f), FAUSTFLOAT(4.0f), FAUSTFLOAT(0.01f));
+		ui_interface->addHorizontalSlider("slow_rotation_speed", &fHslider1, FAUSTFLOAT(0.6f), FAUSTFLOAT(0.1f), FAUSTFLOAT(4.0f), FAUSTFLOAT(0.01f));
 		ui_interface->closeBox();
 	}
 	
@@ -1113,7 +1113,7 @@ class PamRotaryEffect : public dsp {
 			fRec33[0] = 0.83774f * (fRec33[1] - fRec34[1]) + fVec18[1] + 0.06338f * fRec34[0];
 			fRec32[0] = fRec33[0];
 			fRec36[0] = fConst10 * std::sin(fTemp23) + fConst11 * fRec36[1];
-			output1[i0] = FAUSTFLOAT(fRec22[0] + fSlow11 * fRec27[0] + fSlow1 * (fRec27[0] * fRec31[0] + fRec32[0] * fRec36[0]));
+			output1[i0] = FAUSTFLOAT(fSlow1 * (fRec27[0] * fRec31[0] + fRec32[0] * fRec36[0]) + fRec22[0] + fSlow11 * fRec27[0]);
 			iVec0[1] = iVec0[0];
 			fRec10[1] = fRec10[0];
 			fRec9[1] = fRec9[0];

@@ -138,8 +138,8 @@ bass_phase_offset: change the lower band phase from -180° to +180° continuousl
 
 process = crossover1(FC_XOVER) : head_dry_wet : ((woofer(rotation_speed)),(@(48):*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) : mixer with {
     //Constant
+    // BASS_DELAY = dist2samples(HEAD_SPEAKERS_SHAFT_LEN)/2;
     FC_XOVER = 1200;
-    BASS_DELAY = dist2samples(HEAD_SPEAKERS_SHAFT_LEN)/2;
     PHASE_DEPTH = 1;
 
     //Routing functions
@@ -147,8 +147,8 @@ process = crossover1(FC_XOVER) : head_dry_wet : ((woofer(rotation_speed)),(@(48)
     stereo_reduction = ((_<:(_,_)),_,_) : ro.cross2 : (+,+);
 
     //Parameters
-    slow_speed = hslider("slow_rotation_speed",1,0.1,4,0.01);
-    fast_speed = hslider("fast_rotation_speed",7,4,10,0.1);
+    slow_speed = hslider("slow_rotation_speed",0.6,0.1,4,0.01);
+    fast_speed = hslider("fast_rotation_speed",6,4,10,0.1);
     slow_fast = hslider("slow_fast",0,0,1,1);
     is_spinning = 1-hslider("break",0,0,1,1);
     ramp_time = hslider("ramp_time",6,0,20,0.1);

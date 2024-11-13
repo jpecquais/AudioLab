@@ -6,14 +6,14 @@ import audio_dspy as adsp
 
 
 
-sample_rate, h = wavfile.read('IR.wav')
+sample_rate, h = wavfile.read('projects/bela.PAM/ressources/impulses_responses/final_IR_1024.wav')
 
 lambda_ = 0.65
 
 # Prony's method to approximate the impulse response
 # Adjust `a_order` and `b_order` as needed
-a_order = 500  # Denominator polynomial order (related to the number of biquad sections)
-b_order = 500  # Numerator polynomial order
+a_order = 128  # Denominator polynomial order (related to the number of biquad sections)
+b_order = 128  # Numerator polynomial order
 
 h_warped = adsp.allpass_warp(lambda_,h)
 bwp, awp = adsp.prony(h_warped, b_order, a_order)
@@ -34,17 +34,18 @@ print(abs(p))
 # print(sos)
 
 # Calculate the frequency response of the original impulse response
-w_h, h_freq = signal.freqz(h, worN=8000)
+w_h, h_freq = signal.freqz(h, fs=sample_rate, worN=8192)
 
 # Calculate the frequency response of the IIR filter
-w_iir, h_iir = signal.freqz_zpk(z, p, k, worN=8000)
+w_iir, h_iir = signal.freqz_zpk(z, p, k, fs=sample_rate, worN=8192)
 
 # Plot both frequency responses on the same plot
 plt.figure(figsize=(10, 6))
-plt.semilogx(w_h / np.pi, 20 * np.log10(abs(h_freq)), label='Original Impulse Response')
-plt.semilogx(w_iir / np.pi, 20 * np.log10(abs(h_iir)), label='IIR Filter (Prony)', linestyle='--')
+plt.semilogx(w_h / np.pi, 20 * np.log10(abs(h_freq/max(h_freq))), label='Original Impulse Response')
+plt.semilogx(w_iir / np.pi, 20 * np.log10(abs(h_iir/max(h_iir))), label='IIR Filter (Prony)', linestyle='--')
 plt.title('Frequency Response Comparison')
-plt.xlabel('Normalized Frequency (π rad/sample)')
+plt.xlim(80,20000)
+plt.xlabel('Frequency')
 plt.ylabel('Magnitude (dB)')
 plt.grid(True)
 plt.legend()

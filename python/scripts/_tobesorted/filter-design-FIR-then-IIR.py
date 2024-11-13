@@ -202,16 +202,18 @@ def parallel_filter_design(impresp,p,NFIR):
     return Bm, Am, FIR
 
 # Open impulse response
-sample_rate, imp = wavfile.read('IR.wav')
+sample_rate, imp = wavfile.read('projects/bela.PAM/ressources/impulses_responses/final_IR_1024.wav')
+imp = imp.astype(float)/8388608 #24int to float
 
 # Filter parameters
 lambda_ = 0.9
 FIR_size = 128
-b_order = 100  # Numerator polynomial order
-a_order = 100  # Denominator polynomial order (related to the number of biquad sections)
+b_order = 256  # Numerator polynomial order
+a_order = 256  # Denominator polynomial order (related to the number of biquad sections)
 
 # Prony's method to approximate the impulse response
-imp_warped = adsp.allpass_warp(lambda_,imp) # Warp the impulse
+start_trunc_imp = imp[:]
+imp_warped = adsp.allpass_warp(lambda_,start_trunc_imp) # Warp the impulse
 bwp, awp = adsp.prony(imp_warped, b_order, a_order)
 zwp = np.roots(bwp) # Compute zeros
 pwp = np.roots(awp) # Compute poles
@@ -220,27 +222,13 @@ p = (pwp+lambda_)/(1+lambda_*pwp) # Unwarp poles
 k = 0.02705
 sos = signal.zpk2sos(z, p, k) # Compute sos
 
-# Formating for puredata biquads
-output = []
-for so in sos:
-    output.append(-so[4])
-    output.append(-so[5])
-    output.append(so[0])
-    output.append(so[1])
-    output.append(so[2])
-
-joined_string = ','.join(str(element) for element in output)
-final_string = joined_string.replace(","," ")
-# print(final_string)
-# NOTE The IIR filter should be delayed by the size of the FIR part
-
 # Plotting
-
 dirac = np.zeros(len(imp))
-dirac[0]=1
+dirac[0]=75
 iir_resp = signal.sosfilt(sos,dirac)
 hanning = np.hanning(2*FIR_size)
-short_ir_window = imp[:FIR_size]*hanning[FIR_size:]
+short_ir_window = imp[:FIR_size]
+iir_resp = np.concatenate([short_ir_window,iir_resp])
 
 w,h_1 = signal.freqz(imp, worN=16000)
 w,h_2 = signal.freqz(short_ir_window, worN=16000)
@@ -251,18 +239,19 @@ w,h_4 = signal.freqz(iir_resp, worN=16000)
 
 fig,axs = plt.subplots(ncols=2,nrows=2)
 
-axs[0][0].plot(imp)
-axs[0][0].plot(iir_resp)
+axs[0][0].plot(imp/max(imp))
+axs[0][0].plot(iir_resp/max(iir_resp))
 # ax.plot(np.concatenate([imp_begin,np.zeros(len(imp_end))]))
 # ax.plot(iir_resp)
 
-axs[0][1].semilogx(20*np.log10(abs(h_1)), label="IR")
+axs[0][1].semilogx(20*np.log10(abs(h_1)/max(h_1)), label="IR")
 # ax.semilogx(20*np.log10(abs(h_2/np.max(h_2))), label="FIR approx")
 # axs[1].semilogx(20*np.log10(abs(h_3)))
-axs[0][1].semilogx(20*np.log10(abs(h_4)),  label="IIR approx")
+axs[0][1].semilogx(20*np.log10(abs(h_4)/max(h_4)),  label="IIR approx")
 # axs[1].semilogx(20*np.log10(abs(h_5)))
 
 axs[1][0].plot(short_ir_window)
 axs[1][1].semilogx(20*np.log10(abs(h_1)), label="IR")
 axs[1][1].plot(20*np.log10(abs(h_2)))
+
 plt.show()

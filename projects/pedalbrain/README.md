@@ -1,8 +1,8 @@
-# Pedalthing
+# Pedalbrain
 
 ## Pitch
 
-Pedalthing is a MIDI remote for pedalboard. The concept is based around the idea of having a simple software solution to manage pedalboard presets, songs and setlist. Of course, you must have MIDI equipments to be able to use pedalthing.
+Pedalbrain is a MIDI remote for pedalboard. The concept is based around the idea of having a simple software solution to manage pedalboard presets, songs and setlist. Of course, you must have MIDI equipments to be able to use pedalbrain.
 
 
 ## Programmatic approach
@@ -19,4 +19,4 @@ A **Song** is an ordered list of *Presets*.
 
 A **Setlist** is an ordered list of *Setlist*.
 
-Note that Presets can be shared by several songs, and a song can be shared by several setlist. Thus, Pedalthing encourage to design presets in a generic way.
+Note that Presets can be shared by several songs, and a song can be shared by several setlist. Thus, Pedalbrain encourage to design presets in a generic way.

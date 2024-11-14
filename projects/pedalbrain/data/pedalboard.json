@@ -1,0 +1,58 @@
+{
+    "name": "pompei",
+    "gears": {
+        "boss-es8": {
+            "parameters": {
+                "program": {"type": "int","default":"1","minimum":"1","maximum":"128"}, 
+                "loop-1": {"type": "boolean", "default": "False"},
+                "loop-2": {"type": "boolean", "default": "False"},
+                "loop-3": {"type": "boolean", "default": "False"},
+                "loop-4": {"type": "boolean", "default": "False"},
+                "loop-5": {"type": "boolean", "default": "False"},
+                "loop-6": {"type": "boolean", "default": "False"},
+                "loop-7": {"type": "boolean", "default": "False"},
+                "loop-8": {"type": "boolean", "default": "False"}
+            },
+            "preset": {}
+        },
+        "eventide-h90": {
+            "parameters": {
+                "bank": {"type": "int","default":"1","minimum":"1","maximum":"128"},
+                "program": {"type": "int","default":"1","minimum":"1","maximum":"128"},
+                "dummy-1": {"type": "float","default":"0","minimum":"0","maximum":"100"},
+                "dummy-2": {"type": "float","default":"0","minimum":"0","maximum":"100"}
+            },
+            "preset": {}
+        },
+        "strymon-volante": {
+            "parameters": {
+                "program": {"type": "int","default":"1","minimum":"1","maximum":"128"}
+            },
+            "preset": {}
+        },
+        "empress-zoia": {
+            "parameters": {
+                "program": {"type": "int","default":"1","minimum":"1","maximum":"128"},
+                "dummy-1": {"type": "float","default":"0","minimum":"0","maximum":"100"},
+                "dummy-2": {"type": "float","default":"0","minimum":"0","maximum":"100"}
+            },
+            "preset": {}
+        },
+        "bela-pam": {
+            "parameters": {
+                "rotary-slow-fast": {"type": "boolean", "default": "False"},
+                "rotary-break": {"type": "boolean", "default": "False"},
+                "rotary-mix": {"type": "boolean", "default": "False"},
+                "volume": {"type": "float","default":"0","minimum":"0","maximum":"100"}
+            },
+            "preset": {}
+        },
+        "live-prompter": {
+            "parameters": {
+                "song": {}
+            },
+            "preset": {"type": "int","default":"1","minimum":"1","maximum":"128"}
+        }
+    },
+    "preset": {}
+}

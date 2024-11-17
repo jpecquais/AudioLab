@@ -1,29 +1,32 @@
-/*
-TODO-List
-- [ ] - Fix fast rotary sound
-- [ ] - Ramp should be linear and not exponential
-*/
-
-declare name "Rototor";
+declare name "Vibrator";
 declare author "Jean-Loup Pecquais";
-declare copyright "MyCompany";
 declare version "1.00";
 
+import("../../lib/metadata.lib");
 import("../../lib/filters.lib");
 import("../../lib/effects.lib");
 import("../../lib/math.lib");
 import("../../lib/structure.lib");
 import("stdfaust.lib");
 
+/*
+Todo-List
+- [x] - Fix fast rotary sound
+- [!] - Ramp should be linear and not exponential
+*/
+
 /////////////////////////////////////////////
 /*
 Constant declaration
 */
-MAX_DELAY = 96; //samples
+MAX_DELAY = 192; //samples
 HEAD_SPEAKERS_SHAFT_LEN = 0.18; //m
 NUM_OF_HEAD_SPEAKERS = 2;
-NUM_PROPERTY_HEAD_SPEAKER = 7; // Number of property that defines a head speaker
-GLOBAL_ALLPASS_GAIN = 0.5;//hslider("allpasses_gain",50,0,100,0.1)/100;
+NUM_OF_SPEAKERS = NUM_OF_HEAD_SPEAKERS+1; //+1 because of the bass speaker
+NUM_PROPERTY_HEAD_SPEAKER = 7;          // Number of property that defines a head speaker
+GLOBAL_ALLPASS_GAIN = 0.5;              //hslider("allpasses_gain",50,0,100,0.1)/100;
+RANDOM_SPEED = 1.5; //Hz                //hslider("random_speed",0.01,0,10,0.01);
+RANDOM_DEPTH = 0.25; // %               //hslider("random_depth",0.1,0.,1.,0.01);
 
 SPEAKER_HEAD1 = environment {
     ALLPASS_GAIN = GLOBAL_ALLPASS_GAIN;
@@ -47,16 +50,16 @@ SPEAKER_HEAD2 = environment {
     get = ALLPASS_GAIN,SPEED_OFFSET_PERCENT,PHASE_OFFSET,DELAY_OFFSET,DOPPLER_DEL1,DOPPLER_DEL2,ROTATION_DIRECTION;
 };
 
-SPEAKER_HEAD3 = environment {
-    ALLPASS_GAIN = GLOBAL_ALLPASS_GAIN;
-    SPEED_OFFSET_PERCENT = -0.2;
-    PHASE_OFFSET = 0.5*ma.PI;
-    DELAY_OFFSET = 13;
-    DOPPLER_DEL1 = 29;
-    DOPPLER_DEL2 = 37;
-    ROTATION_DIRECTION = 1;
-    get = ALLPASS_GAIN,SPEED_OFFSET_PERCENT,PHASE_OFFSET,DELAY_OFFSET,DOPPLER_DEL1,DOPPLER_DEL2,ROTATION_DIRECTION;
-};
+// SPEAKER_HEAD3 = environment {
+//     ALLPASS_GAIN = GLOBAL_ALLPASS_GAIN;
+//     SPEED_OFFSET_PERCENT = -0.2;
+//     PHASE_OFFSET = 0.5*ma.PI;
+//     DELAY_OFFSET = 13;
+//     DOPPLER_DEL1 = 29;
+//     DOPPLER_DEL2 = 37;
+//     ROTATION_DIRECTION = 1;
+//     get = ALLPASS_GAIN,SPEED_OFFSET_PERCENT,PHASE_OFFSET,DELAY_OFFSET,DOPPLER_DEL1,DOPPLER_DEL2,ROTATION_DIRECTION;
+// };
 
 speakers = SPEAKER_HEAD1.get,SPEAKER_HEAD2.get;
 
@@ -77,6 +80,8 @@ Output a phasor signal going from -pi to pi.
 */
 engine(rotation_speed,direction,phase_offset) = os.hsp_phasor(2*ma.PI,rotation_speed*pow(-1,direction),0,phase_offset)-ma.PI;
 get_distance_from_engine(shaft_len,angle) = (cos(angle)*0.5+0.5)*shaft_len*ma.SR/SPEED_OF_SOUND;
+// randomize(i) = *(1+RANDOM_DEPTH*0.5*(no.noises(NUM_OF_SPEAKERS+1,i):fi.lowpass(1,RANDOM_SPEED)));
+randomize(i) = *(1+RANDOM_DEPTH*0.5*((par(i,NUM_OF_SPEAKERS+1,no.lfnoise(RANDOM_SPEED)):ba.selector(i,NUM_OF_SPEAKERS+1)):fi.lowpass(1,RANDOM_SPEED)));
 
 /////////////////////////////////////////
 /*
@@ -85,14 +90,14 @@ rotation_speed: modulation frequency in Hz.
 am_depth: 0 is no tremolo effect. 1 is maximum tremolo effect.
 PHASE_DEPTH: 0 is no phase modulation. 1 is maximum phase modulation. Note that depth of amplitude modulation depends on the phase depth
 */
-head_rotors(rotation_speed,am_depth,phase_depth,sig) = sig*(1.414) <: doppler : gain_compensation : hilbert_modulators with {
+head_rotors(rotation_speed,am_depth,phase_depth,sig) = sig*(ba.db2linear(3*(3-N))) <: doppler : gain_compensation : hilbert_modulators with {
     N = NUM_OF_HEAD_SPEAKERS;
 
     _am_depth = clip(0,1,am_depth)*0.5;
 
     engines = par(i,N,engine(rotation_speed*(1+get_property(IDX_SPEED_OFFSET_PERCENT,i)),get_property(IDX_ROTATION_DIRECTION,i),get_property(IDX_PHASE_OFFSET,i)));
-    lfos = engines : par(i,N,cos);
-    dels = engines : par(i,N,get_distance_from_engine(HEAD_SPEAKERS_SHAFT_LEN)+get_property(IDX_DELAY_OFFSET,i));
+    lfos = engines : par(i,N,cos : randomize(i));
+    dels = engines : par(i,N,get_distance_from_engine(HEAD_SPEAKERS_SHAFT_LEN)+get_property(IDX_DELAY_OFFSET,i) : randomize(i));
 
     doppler = back_and_forth.feedback_summed(N,main,direct,loop) with {
         F_ABSORPTION = 3000;
@@ -110,9 +115,9 @@ head_rotors(rotation_speed,am_depth,phase_depth,sig) = sig*(1.414) <: doppler : 
 woofer(rotation_speed,sig) = sig : hilbert_modulator(lfo,0) with {
     N = NUM_OF_HEAD_SPEAKERS;
     SPEED_OFFSET = sum(i,N,get_property(IDX_SPEED_OFFSET_PERCENT,i)) : /(N);
-    phase_offset2 = hslider("mic_angle",0.5,-1,1,0.01)*ma.PI; //FIXME: Does not appear ?!?
-    woofer_engine = engine(rotation_speed*(1+SPEED_OFFSET),1,phase_offset2);
-    lfo = cos(woofer_engine);
+    offset = 0.5*ma.PI;
+    woofer_engine = engine(rotation_speed*(1+SPEED_OFFSET),1,offset);
+    lfo = cos(woofer_engine) : randomize(2);
 };
 
 ////////////////////////////////////////////
@@ -136,26 +141,29 @@ treble_mix: adjust ce quantity of head speakers mix. 100% always sounds like dry
 bass_phase_offset: change the lower band phase from -180° to +180° continuously. Alter the tonal balance of the effect.
 */
 
-process = crossover1(FC_XOVER) : head_dry_wet : ((woofer(rotation_speed)),(@(48):*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) : mixer with {
+process = crossover1(FC_XOVER) : head_dry_wet : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) : mixer with {
     //Constant
     // BASS_DELAY = dist2samples(HEAD_SPEAKERS_SHAFT_LEN)/2;
     FC_XOVER = 1200;
     PHASE_DEPTH = 1;
+    HEADS_DELAY = 48;
 
     //Routing functions
     head_dry_wet = (_,(_<:_,_)) : (+(_,*(sqrt(1-treble_mix))),*(sqrt(treble_mix)));
     stereo_reduction = ((_<:(_,_)),_,_) : ro.cross2 : (+,+);
 
-    //Parameters
-    slow_speed = hslider("slow_rotation_speed",0.6,0.1,4,0.01);
-    fast_speed = hslider("fast_rotation_speed",6,4,10,0.1);
-    slow_fast = hslider("slow_fast",0,0,1,1);
-    is_spinning = 1-hslider("break",0,0,1,1);
-    ramp_time = hslider("ramp_time",6,0,20,0.1);
-    treble_mix = hslider("mix",50,0,100,0.1)/100;
-    am_depth = 1-hslider("mic_distance",50,0,100,0.1)/100;
+    //Delay
+    global_head_delay = de.fdelay1(MAX_DELAY,(HEADS_DELAY:randomize(3)));
 
-    speed_factor = fast_speed/slow_speed;
-    rotation_speed = is_spinning*slow_speed*pow(speed_factor,slow_fast) : si.smooth(ba.tau2pole(ramp_time));
+    //Parameters
+    slow_speed  = hslider("slow_rotation_speed",0.6,0.1,4,0.01);
+    fast_speed  = hslider("fast_rotation_speed",6,4,10,0.1);
+    slow_fast   = hslider("slow_fast",0,0,1,1);
+    is_spinning = 1-hslider("break",0,0,1,1);
+    ramp_time   = hslider("ramp_time",3,0,20,0.1);
+    treble_mix  = hslider("mix",50,0,100,0.1)/100;
+    am_depth    = 1-hslider("mic_distance",40,0,100,0.1)/100;
+
+    rotation_speed = is_spinning*ba.if(slow_fast,fast_speed,slow_speed) : si.smooth(ba.tau2pole(ramp_time));
     gain_compensation = ba.db2linear(3*am_depth);
 };

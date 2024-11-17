@@ -1,33 +1,34 @@
 from abc import ABC, abstractmethod
-from typing import Union, TypeAlias
+from typing import Union, TypeAlias, Dict
 
 ParameterType: TypeAlias = Union[float,int,bool]
 Number : TypeAlias = Union[float,int]
 
 class Parameter(ABC):
-    def __init__(self, name: str, default: ParameterType):
-        self.name = name
+    def __init__(self, default: ParameterType):
         self._default = default
         self._value = default
 
     def reset(self):
         self._value = self._default
 
-    def getValue(self):
+    @property
+    def value(self):
         return self._value
     
     @abstractmethod
-    def setValue(self):
+    @value.setter
+    def value(self, new_value):
         pass
 
 class IntParameter(Parameter):
-    def __init__(self, name: str, default: int, min: int, max: int):
-        super().__init__(name, default)
-        self._value = default
+    def __init__(self, default: int, min: int, max: int):
+        super().__init__(default)
         self._min = min
         self._max = max
 
-    def setValue(self, new_value: float):
+    @Parameter.value.setter
+    def value(self, new_value):
         minimum = self._min
         maximum = self._max
         clamped_value = min(max(minimum, new_value), maximum)
@@ -40,7 +41,8 @@ class FloatParameter(Parameter):
         self._min = min
         self._max = max
 
-    def setValue(self, new_value: float):
+    @Parameter.value.setter
+    def value(self, new_value):
         minimum = self._min
         maximum = self._max
         clamped_value = min(max(minimum, new_value), maximum)
@@ -51,10 +53,13 @@ class BooleanParameter(Parameter):
         super().__init__(name, default)
         self._value = default
 
-    def setValue(self, new_value: bool):
+    @Parameter.value.setter
+    def value(self, new_value):
         self._value = new_value
 
-def create_parameter(name: str, type: ParameterType, default: ParameterType, min: Number = None, max: Number = None) -> Parameter:
-    if type == float: return FloatParameter(name,default,min,max)
-    if type == int: return IntParameter(name,default,min,max)
+Parameters: TypeAlias = Dict[Parameter]
+
+def create_parameter(name: str, type: ParameterType, default: ParameterType, minimum: Number = None, maximum: Number = None) -> Parameter:
+    if type == float: return FloatParameter(name,default,minimum,maximum)
+    if type == int: return IntParameter(name,default,minimum,maximum)
     if type == bool: return BooleanParameter(name,default)

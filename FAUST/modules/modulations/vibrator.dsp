@@ -15,7 +15,7 @@ List:
 Working On:
 - [ ] - Code cleaning
     - [ ] - Document code
-    - [ ] - Extract mixer from vibrator 
+    - [x] - Extract mixer from vibrator 
     - [x] - Refactor the code to a vibrator(N,Speaker_1,Speaker_2,...,Speaker_N,sig) function that is called inside the process function.
 
 Done:
@@ -25,10 +25,14 @@ Done:
 - [!] - Ramp should be linear and not exponential
 */
 
-/////////////////////////////////////////////
+stereo_mixer(num_channels) = si.bus(num_channels) : par(i,N,stereo_pan(i/N)) : routing.stereo_rotate(2*N) : (sum(i,N,_),sum(i,N,_)) with {
+    N = num_channels;
+    stereo_pan(position,sig) = sig <: (*(sqrt(1-position)),*(sqrt(position)));
+};
+
 create_speaker(speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction) = speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction;
 
-vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dry_wet : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) : mixer with {
+vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dry_wet : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) with {
     /*
     Constant declaration
     */
@@ -66,7 +70,7 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dr
     "Head" speakers definition
     rotation_speed: modulation frequency in Hz.
     am_depth: 0 is no tremolo effect. 1 is maximum tremolo effect.
-    PHASE_DEPTH: 0 is no phase modulation. 1 is maximum phase modulation. Note that depth of amplitude modulation depends on the phase depth
+    phase_depth: 0 is no phase modulation. 1 is maximum phase modulation. Note that depth of amplitude modulation depends on the phase depth
     */
     head_rotors(rotation_speed,am_depth,phase_depth,sig) = sig*(ba.db2linear(3*(3-N))) <: doppler : gain_compensation : hilbert_modulators with {
         N = num_head_speakers;
@@ -98,15 +102,6 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dr
         lfo = cos(woofer_engine) : randomize(2);
     };
 
-    ////////////////////////////////////////////
-    POSITION_LIST = 0,1;
-    stereo_pan(position,sig) = sig <: (*(sqrt(1-position)),*(sqrt(position)));
-    mixer = si.bus(NUM_OF_SPEAKERS) : mix with{
-        N = num_head_speakers;
-        mix_heads = par(i,N,stereo_pan(ba.selector(i,N,POSITION_LIST))) : routing.stereo_rotate(2*N) : (sum(i,N,_),sum(i,N,_));
-        mix = ((_<:_,_),(si.bus(N) : mix_heads)) : routing.interleave(4) : (+,+); 
-    };
-
     //Routing functions
     head_dry_wet = (_,(_<:_,_)) : (+(_,*(sqrt(1-treble_mix))),*(sqrt(treble_mix)));
     stereo_reduction = ((_<:(_,_)),_,_) : ro.cross2 : (+,+);
@@ -127,17 +122,16 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dr
     gain_compensation = ba.db2linear(3*am_depth);
 };
 
-process = vibrator(FC_XOVER,NUM_OF_HEAD_SPEAKERS,(speaker_1,speaker_2)) with {
-    //Constant
-    FC_XOVER = 1200;
-
-    /////////////////////////////////////////////
+process = vibrator(FC_XOVER,NUM_OF_HEAD_SPEAKERS,(speaker_1,speaker_2)) : mix with {
     /*
     Constant declaration
     */
+    FC_XOVER = 1200;
     NUM_OF_HEAD_SPEAKERS = 2;
 
     speaker_1 = create_speaker(0.,0.5*ma.PI,0,11,23,1);
     speaker_2 = create_speaker(0.2,0.5*ma.PI,7,17,31,-1);
+
+    mix = ((_<:_,_),(si.bus(NUM_OF_HEAD_SPEAKERS) : stereo_mixer(NUM_OF_HEAD_SPEAKERS))) : routing.interleave(4) : (+,+); 
 
 };

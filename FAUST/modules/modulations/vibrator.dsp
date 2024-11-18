@@ -2,7 +2,6 @@ declare name "Vibrator";
 declare author "Jean-Loup Pecquais";
 declare version "1.00";
 
-import("../../lib/metadata.lib");
 import("../../lib/filters.lib");
 import("../../lib/effects.lib");
 import("../../lib/math.lib");
@@ -11,6 +10,9 @@ import("stdfaust.lib");
 
 /*
 Todo-List
+- [ ] - Refactor the code to a vibrator(N,Speaker_1,Speaker_2,...,Speaker_N,sig) function that is called inside the process function.
+- [x] - Adding randomness is too computanial heavy for the current state of Bela.PAM
+    - [x] Find a mecanism to bypass randomess -> Use explicit substitution
 - [x] - Fix fast rotary sound
 - [!] - Ramp should be linear and not exponential
 */
@@ -80,7 +82,6 @@ Output a phasor signal going from -pi to pi.
 */
 engine(rotation_speed,direction,phase_offset) = os.hsp_phasor(2*ma.PI,rotation_speed*pow(-1,direction),0,phase_offset)-ma.PI;
 get_distance_from_engine(shaft_len,angle) = (cos(angle)*0.5+0.5)*shaft_len*ma.SR/SPEED_OF_SOUND;
-// randomize(i) = *(1+RANDOM_DEPTH*0.5*(no.noises(NUM_OF_SPEAKERS+1,i):fi.lowpass(1,RANDOM_SPEED)));
 randomize(i) = *(1+RANDOM_DEPTH*0.5*((par(i,NUM_OF_SPEAKERS+1,no.lfnoise(RANDOM_SPEED)):ba.selector(i,NUM_OF_SPEAKERS+1)):fi.lowpass(1,RANDOM_SPEED)));
 
 /////////////////////////////////////////

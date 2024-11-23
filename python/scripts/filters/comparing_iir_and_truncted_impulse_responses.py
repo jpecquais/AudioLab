@@ -41,8 +41,6 @@ def iir_to_fir(order,lambda_,impulse):
     pwp = np.roots(awp)
     z = (zwp+lambda_)/(1+lambda_*zwp)
     p = (pwp+lambda_)/(1+lambda_*pwp)
-    # b = adsp.allpass_warp_roots(-lambda_,b)
-    # a = adsp.allpass_warp_roots(-lambda_,a)
     k=0.5
     # Convert the filter into a series of second-order sections for stability
     return z,p,k#signal.zpk2sos(z,p,k)

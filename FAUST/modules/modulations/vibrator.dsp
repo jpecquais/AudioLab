@@ -32,7 +32,7 @@ stereo_mixer(num_channels) = si.bus(num_channels) : par(i,N,stereo_pan(i/N)) : r
 
 create_speaker(speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction) = speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction;
 
-vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dry_wet : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) with {
+vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : head_dry_wet : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) with {
     /*
     Constant declaration
     */
@@ -82,7 +82,7 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = crossover1(f_cross) : head_dr
         dels = engines : par(i,N,get_distance_from_engine(HEAD_SPEAKERS_SHAFT_LEN)+get_property(IDX_DELAY_OFFSET,i));
 
         doppler = back_and_forth.feedback_summed(N,main,direct,loop) with {
-            F_ABSORPTION = 3000;
+            F_ABSORPTION = 4500;
             main = par(i,N,(de.fdelay1(MAX_DELAY,(ba.selector(i,N,dels))):fi.lowpass(1,F_ABSORPTION)));
             direct = par(i,N,(*(GLOBAL_ALLPASS_GAIN) <: (_,@(get_property(IDX_DOPPLER_DEL1,i)),@(get_property(IDX_DOPPLER_DEL2,i)))) :> _);
             loop = par(i,N,*((-1)*(GLOBAL_ALLPASS_GAIN/3)) : fi.lowpass(1,F_ABSORPTION) <: (_,@(get_property(IDX_DOPPLER_DEL1,i)),@(get_property(IDX_DOPPLER_DEL2,i))) :> _);

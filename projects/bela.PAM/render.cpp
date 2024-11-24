@@ -17,16 +17,16 @@
 #endif
 
 //Constant Declaration
-const int 			NEURAL_NETWORK_HIDDEN_SIZE  = 8;
-const std::string	MIDI_PORT					= "hw:0,0,0";
-const std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
-const unsigned int	MAX_IMPULSE_LENGTH			= 256;
-const int 			BLACKBIRD_POLARITY 			= 1;
-const int 			CONSTABLE_POLARITY 			= -1;
-const float 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12)*BLACKBIRD_POLARITY;
-const float 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0)*CONSTABLE_POLARITY;
-const float 		OUTPUT_GAIN 				= db2linear<float>(-12);
-const int 			MIDI_CH						= 5;
+static constexpr unsigned int	MAX_IMPULSE_LENGTH			= 256;
+static constexpr unsigned int 	NEURAL_NETWORK_HIDDEN_SIZE  = 8;
+static constexpr int 			BLACKBIRD_POLARITY 			= 1;
+static constexpr int 			CONSTABLE_POLARITY 			= -1;
+static constexpr int 			MIDI_CH						= 5;
+static const	 float	 		OUTPUT_GAIN 				= db2linear<float>(-12.f);
+static const 	 float	 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12.f)*BLACKBIRD_POLARITY;
+static const	 float	 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0.f)*CONSTABLE_POLARITY;
+static const	 std::string	MIDI_PORT					= "hw:0,0,0";
+static const	 std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
 
 enum CHANNEL{
 	LEFT = 0,
@@ -34,29 +34,29 @@ enum CHANNEL{
 	STEREO = 2
 };
 
-float **theBuffer; //TODO: should be refactorized with smart pointer.
+static float **theBuffer = nullptr; //TODO: should be refactorized with smart pointer.
 
 //Instanciation of main dsp objects
 #ifdef DEBUG
 	Oscillator osc;
 	Scope scope;
 #endif
-InputSection<float> theInputSection;
-Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
-Convolver theCabinet;
-PamRotaryEffect theRotary;
+static InputSection<float> theInputSection;
+static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
+static Convolver theCabinet;
+static PamRotaryEffect theRotary;
 
 //Define "UI"
-MapUI theUI;
-Parameter<float> outputGain("OutputGain",1.,0.,1.);
-FAUSTParameter<float> mix(&theUI,"mix",50.,0.,100.);
-FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.,0.,1.);
-FAUSTParameter<float> breakMode(&theUI,"break",0.,0.,1.);
+static MapUI theUI;
+static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
+static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f);
+static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
+static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
 
 //Define MIDI
-Midi theMidi;
-std::array<IParameter<float>*,128> ccToParameters;
-void midiCallback(MidiChannelMessage message, void *arg);
+static Midi theMidi;
+static std::array<IParameter<float>*,128> ccToParameters;
+static void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
 {

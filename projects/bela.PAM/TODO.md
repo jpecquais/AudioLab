@@ -3,13 +3,15 @@
 ## Backlogs:
 
 - [ ] - Create an AudioBuffer class.
-- [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
 
 ## Working on:
 
+- [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
+  - At this point Prony and FDLS have been roughly tested, without clear improvement over trunc impulse response. FDLS tests may have bugs. 
 
 ## Done:
 
+- [x] - Bump frequency response of rotary sound to 4500 Hz.
 - [x] - FAUSTParameter do not respond to MIDI CC messages.
 - [x] - Add MIDI support
   - [x] CC Support

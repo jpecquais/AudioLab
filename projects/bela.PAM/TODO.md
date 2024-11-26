@@ -1,15 +1,16 @@
 # Bela.PAM Project management
 
-## Backlogs:
+## 📥 Backlogs:
 
 - [ ] - Create an AudioBuffer class.
+- [ ] - FIXME: Default value of parameters are not applyied to FAUSTParameters.
 
-## Working on:
+## 🧠 Working on:
 
 - [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
   - At this point Prony and FDLS have been roughly tested, without clear improvement over trunc impulse response. FDLS tests may have bugs. 
 
-## Done:
+## 💪 Done:
 
 - [x] - Bump frequency response of rotary sound to 4500 Hz.
 - [x] - FAUSTParameter do not respond to MIDI CC messages.
@@ -28,3 +29,5 @@
 - [x] - Python script for pushing code to Bela
   - [x] - Push cpp audiolab librarie to `root@bela.local/Bela/libraries/audiolab`
   - [x] - Create mecanism to update project code.
+
+## 🤯 Stuck:

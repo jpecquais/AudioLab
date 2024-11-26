@@ -89,8 +89,8 @@ bool setup(BelaContext *context, void *userData)
 		scope.setup(2, context->audioSampleRate);
 	#endif
 	//Attach callback
-	drive.setCallback(&computeOutputGain)
-	outputGain.setCallback(&computeOutputGain)
+	drive.setCallback(&computeOutputGain);
+	outputGain.setCallback(&computeOutputGain);
 
 	//MIDI setup
 	theMidi.readFrom(MIDI_PORT.c_str());
@@ -117,7 +117,7 @@ bool setup(BelaContext *context, void *userData)
 	}
 
 	for (auto parameter : Parameters){
-		parameter->reset();
+		if (parameter != nullptr) parameter->reset();
 	}
 
 	return true;

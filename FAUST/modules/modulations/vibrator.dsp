@@ -3,6 +3,7 @@ declare author "Jean-Loup Pecquais";
 declare version "1.00";
 
 import("../../lib/filters.lib");
+// import("../../lib/matrix.lib");
 import("../../lib/effects.lib");
 import("../../lib/math.lib");
 import("../../lib/structure.lib");
@@ -88,7 +89,9 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : h
             loop = par(i,N,*((-1)*(GLOBAL_ALLPASS_GAIN/3)) : fi.lowpass(1,F_ABSORPTION) <: (_,@(get_property(IDX_DOPPLER_DEL1,i)),@(get_property(IDX_DOPPLER_DEL2,i))) :> _);
         };
 
-        hilbert_modulators = par(i,N,hilbert_modulator(ba.selector(i,N,lfos)*phase_depth,_am_depth));
+        allpass_f = 4000;
+        Q = (tan(ma.PI*allpass_f/ma.SR)-1)/(tan(ma.PI*allpass_f/ma.SR)+1);
+        hilbert_modulators = par(i,N,hilbert_modulator_dry_path(ba.selector(i,N,lfos)*phase_depth,_am_depth,(allpass(Q):*(-1))));
 
         gain_compensation = par(i,N,*(sqrt(1-GLOBAL_ALLPASS_GAIN)));
 
@@ -131,7 +134,8 @@ process = vibrator(FC_XOVER,NUM_OF_HEAD_SPEAKERS,(speaker_1,speaker_2)) : mix wi
 
     speaker_1 = create_speaker(0.,0.5*ma.PI,0,11,23,1);
     speaker_2 = create_speaker(0.2,0.5*ma.PI,7,17,31,-1);
+    width = hslider("stereo_width",50,0,100,0.1);
 
-    mix = ((_<:_,_),(si.bus(NUM_OF_HEAD_SPEAKERS) : stereo_mixer(NUM_OF_HEAD_SPEAKERS))) : routing.interleave(4) : (+,+); 
+    mix = ((_<:_,_),(si.bus(NUM_OF_HEAD_SPEAKERS) : stereo_mixer(NUM_OF_HEAD_SPEAKERS): stereo_width(width))) : routing.interleave(4) : (+,+); 
 
 };

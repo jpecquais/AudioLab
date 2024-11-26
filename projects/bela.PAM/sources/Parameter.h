@@ -10,6 +10,10 @@ class IParameter{
 
     virtual void setValue(T t_newVal) = 0;
     virtual T getValue() = 0;
+    
+    void reset(){
+        setValue(m_default);
+    }
 
     T getMaximum(){
         return m_max;

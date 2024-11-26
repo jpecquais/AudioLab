@@ -49,7 +49,7 @@ static PamRotaryEffect theRotary;
 //Define "UI"
 static MapUI theUI;
 static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
-static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f);
+static FAUSTParameter<float> mix(&theUI,"mix",25.f,0.f,100.f);
 static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
 static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
 
@@ -88,6 +88,12 @@ bool setup(BelaContext *context, void *userData)
 	for (int i = 0; i < CHANNEL::STEREO; i++) {
 		theBuffer[i] = new float[context->audioFrames];
 	}
+
+	mix.reset();
+	slowFastMode.reset();
+	breakMode.reset();
+	outputGain.reset();
+
 	return true;
 }
 
@@ -131,7 +137,7 @@ void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG
 		rt_printf("MIDI Channel: %i \n",message.getChannel());
 	#endif
-	if (message.getChannel() != MIDI_CH) return;
+	if (message.getChannel() != MIDI_CH-1) return; //Bela count midi channel from zero !!!
 	if (message.getType() == kmmControlChange){
 		#ifdef DEBUG
 			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));

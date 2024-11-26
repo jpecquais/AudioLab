@@ -22,6 +22,7 @@ static constexpr unsigned int 	NEURAL_NETWORK_HIDDEN_SIZE  = 8;
 static constexpr int 			BLACKBIRD_POLARITY 			= 1;
 static constexpr int 			CONSTABLE_POLARITY 			= -1;
 static constexpr int 			MIDI_CH						= 5;
+static constexpr int 			BELA_MIDI_CH 				= MIDI_CH-1; //Bela count midi channel from zero !!!
 static const	 float	 		OUTPUT_GAIN 				= db2linear<float>(-12.f);
 static const 	 float	 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12.f)*BLACKBIRD_POLARITY;
 static const	 float	 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0.f)*CONSTABLE_POLARITY;
@@ -49,13 +50,14 @@ static PamRotaryEffect theRotary;
 //Define "UI"
 static MapUI theUI;
 static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
+static Parameter<float> drive("drive",1.f,0.f,10.f);
 static FAUSTParameter<float> mix(&theUI,"mix",25.f,0.f,100.f);
 static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
 static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
 
 //Define MIDI
 static Midi theMidi;
-static std::array<IParameter<float>*,128> ccToParameters;
+static std::array<IParameter<float>*,128> Parameters;
 static void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
@@ -73,10 +75,11 @@ bool setup(BelaContext *context, void *userData)
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
 	//Bind parameters to midi CC number.
-	ccToParameters[0] = &mix;
-	ccToParameters[1] = &slowFastMode;
-	ccToParameters[2] = &breakMode;
-	ccToParameters[7] = &outputGain;
+	Parameters[0] = &mix;
+	Parameters[1] = &slowFastMode;
+	Parameters[2] = &breakMode;
+	Parameters[3] = &drive;
+	Parameters[7] = &outputGain;
 
 	//Init dsp blocks
 	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
@@ -89,16 +92,18 @@ bool setup(BelaContext *context, void *userData)
 		theBuffer[i] = new float[context->audioFrames];
 	}
 
-	mix.reset();
-	slowFastMode.reset();
-	breakMode.reset();
-	outputGain.reset();
+	for (auto parameter : Parameters){
+		parameter->reset();
+	}
 
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
+	float _driveGain = drive.getValue();
+	float _invDriveGain = 1/_driveGain
+	float _totalOutputGain = OUTPUT_GAIN*outputGain.getValue()*_invDriveGain;
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		// Sum both input
 		#ifndef DEBUG
@@ -107,8 +112,10 @@ void render(BelaContext *context, void *userData)
 		#else
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //sine generator
 		#endif
-		// Power Amp & Speaker Simulation
-		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN*outputGain.getValue(); // Rest of signal chain is linear, so output gain can be applied here.
+		// Power Amp & Non Linear Speaker Simulation
+		theBuffer[CHANNEL::LEFT][n] *= _driveGain;
+		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n]);// Rest of signal chain is linear, so output gain can be applied here.
+		theBuffer[CHANNEL::LEFT][n] *= _totalOutputGain;
 	}
 	// Linear Speaker Simulation
 	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
@@ -137,12 +144,12 @@ void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG
 		rt_printf("MIDI Channel: %i \n",message.getChannel());
 	#endif
-	if (message.getChannel() != MIDI_CH-1) return; //Bela count midi channel from zero !!!
+	if (message.getChannel() != BELA_MIDI_CH) return;
 	if (message.getType() == kmmControlChange){
 		#ifdef DEBUG
 			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
 		#endif
-		auto& currParam = ccToParameters[message.getDataByte(0)];
+		auto& currParam = Parameters[message.getDataByte(0)];
 		if (currParam == nullptr) return;
 		#ifdef DEBUG
 			rt_printf("Is a valid CC\n");

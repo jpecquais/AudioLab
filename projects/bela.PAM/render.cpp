@@ -46,6 +46,7 @@ static InputSection<float> theInputSection;
 static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
 static PamRotaryEffect theRotary;
+static float globalOutputGain = OUTPUT_GAIN;
 
 //Define "UI"
 static MapUI theUI;
@@ -60,6 +61,25 @@ static Midi theMidi;
 static std::array<IParameter<float>*,128> Parameters;
 static void midiCallback(MidiChannelMessage message, void *arg);
 
+//Forward declaration
+void computeOutputGain(); // <-- Callback to compute the output gain.
+						  // 	 Should optimize the CPU load in the render function
+
+/**
+ * @brief Initializes the audio processing setup.
+ *
+ * This function sets up the audio context, initializes the input section,
+ * amplifier, convolver, and rotary effect. It also sets up MIDI communication
+ * and binds parameters to MIDI CC numbers.
+ * 
+ * To limit the number of computation in the main render function, the output gain
+ * is computed inside a callback. We need to attach the callback to the parameters
+ * that have an effect on the output gain.
+ *
+ * @param context Pointer to the BelaContext containing audio settings.
+ * @param userData Pointer to user-defined data.
+ * @return true if the setup is successful, false otherwise.
+ */
 bool setup(BelaContext *context, void *userData)
 {
 	#ifdef DEBUG
@@ -68,12 +88,16 @@ bool setup(BelaContext *context, void *userData)
 		osc.setPhase(0);
 		scope.setup(2, context->audioSampleRate);
 	#endif
+	//Attach callback
+	drive.setCallback(&computeOutputGain)
+	outputGain.setCallback(&computeOutputGain)
 
+	//MIDI setup
 	theMidi.readFrom(MIDI_PORT.c_str());
 	theMidi.writeTo(MIDI_PORT.c_str());
 	theMidi.enableParser(true);
-	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
+
 	//Bind parameters to midi CC number.
 	Parameters[0] = &mix;
 	Parameters[1] = &slowFastMode;
@@ -99,11 +123,18 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
+/**
+ * @brief Processes the audio in real-time.
+ *
+ * This function handles the audio processing for each frame. It reads audio input,
+ * processes it through the input section, amplifier, convolver, and rotary effect,
+ * and writes the output to the audio buffer.
+ *
+ * @param context Pointer to the BelaContext containing audio settings.
+ * @param userData Pointer to user-defined data.
+ */
 void render(BelaContext *context, void *userData)
 {
-	float _driveGain = drive.getValue();
-	float _invDriveGain = 1/_driveGain
-	float _totalOutputGain = OUTPUT_GAIN*outputGain.getValue()*_invDriveGain;
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		// Sum both input
 		#ifndef DEBUG
@@ -113,12 +144,14 @@ void render(BelaContext *context, void *userData)
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //sine generator
 		#endif
 		// Power Amp & Non Linear Speaker Simulation
-		theBuffer[CHANNEL::LEFT][n] *= _driveGain;
+		theBuffer[CHANNEL::LEFT][n] *= drive.getValue();
 		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n]);// Rest of signal chain is linear, so output gain can be applied here.
-		theBuffer[CHANNEL::LEFT][n] *= _totalOutputGain;
+		theBuffer[CHANNEL::LEFT][n] *= globalOutputGain;
 	}
+
 	// Linear Speaker Simulation
 	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
+	// Rotary speaker simulation
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
 
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
@@ -130,6 +163,14 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
+/**
+ * @brief Cleans up resources allocated during setup.
+ *
+ * This function deallocates the memory used for the audio buffer.
+ *
+ * @param context Pointer to the BelaContext containing audio settings.
+ * @param userData Pointer to user-defined data.
+ */
 void cleanup(BelaContext *context, void *userData)
 {
 	for (int i=0; i<CHANNEL::STEREO;i++){
@@ -140,6 +181,18 @@ void cleanup(BelaContext *context, void *userData)
 	theBuffer = nullptr;
 }
 
+
+/**
+ * @brief Handles MIDI messages.
+ *
+ * This function processes MIDI messages and updates the corresponding parameters
+ * based on the MIDI CC numbers.
+ * 
+ * The CC numbers correspond to the index of the parameter in the parameters list.
+ *
+ * @param message The MIDI message received.
+ * @param arg Pointer to additional arguments (typically the MIDI port).
+ */
 void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG
 		rt_printf("MIDI Channel: %i \n",message.getChannel());
@@ -155,5 +208,17 @@ void midiCallback(MidiChannelMessage message, void *arg){
 			rt_printf("Is a valid CC\n");
 		#endif
 		currParam->setValueFromMidi(message.getDataByte(1));
+		if (currParam->hasCallback()) currParam->invokeCallback();
 	}
+}
+
+
+/**
+ * @brief Computes the global output gain.
+ *
+ * This function calculates the global output gain based on the current values
+ * of the output gain and drive parameters.
+ */
+void computeOutputGain(){
+	globalOutputGain = OUTPUT_GAIN*outputGain.getValue()/drive.getValue();
 }

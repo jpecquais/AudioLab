@@ -5,7 +5,7 @@
 template <class T>
 class IParameter{
     public:
-    IParameter(std::string t_name, T t_default, T t_min, T t_max):m_name(t_name),m_value(t_default),m_min(t_min),m_max(t_max),m_default(t_default){};
+    IParameter(std::string t_name, T t_default, T t_min, T t_max):m_name(t_name),m_value(t_default),m_min(t_min),m_max(t_max),m_default(t_default),m_hasCallback(false),m_callback(nullptr){};
     ~IParameter() = default;
 
     virtual void setValue(T t_newVal) = 0;
@@ -35,9 +35,24 @@ class IParameter{
         setValue(((t_value/127.)*(m_max-m_min))+m_min);
     }
 
+    void setCallback(std::function<void()> func){
+        m_callback = func;
+        m_hasCallback = true;
+    }
+
+    bool hasCallback(){
+        return m_hasCallback;
+    }
+
+    void invokeCallback(){
+        m_callback();
+    }
+
     protected:
     std::string m_name;
     T m_value, m_min, m_max, m_default;
+    bool m_hasCallback;
+    std::function<void()> m_callback;
 };
 
 template <class T>

@@ -9,7 +9,7 @@ impulse, sample_rate = sf.read('projects/bela.PAM/ressources/impulses_responses/
 
 # lambda_ = 0.15
 lambda_ = 0.75
-iir_order = 96
+iir_order = 128
 fir_order = 128
 
 def add_missing_complex_conjugate(array: np.ndarray):

@@ -19,8 +19,9 @@ hilbert_modulator(lfo,blend,sig) = hilbert_modulator_dry_path(lfo,blend,_,sig);
 
 
 
-stereo_width(width,left,right) = (left,right) : str2ms : (*(sqrt((1-_width))),*(sqrt(_width))) : ms2str with {
+stereo_width(width,left,right) = (left,right) : str2ms : (*(sqrt((1-_width))),(*(sqrt(_width)))) : ms2str with {
     str2ms(left,right) = left+right,left-right;
     ms2str(mid,side) = str2ms(mid,side);
+
     _width = width/100;
 };

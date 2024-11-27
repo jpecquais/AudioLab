@@ -46,7 +46,7 @@ static InputSection<float> theInputSection;
 static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
 static PamRotaryEffect theRotary;
-static float globalOutputGain = OUTPUT_GAIN;
+static float totalOutputGain = OUTPUT_GAIN;
 
 //Define "UI"
 static MapUI theUI;
@@ -146,7 +146,7 @@ void render(BelaContext *context, void *userData)
 		// Power Amp & Non Linear Speaker Simulation
 		theBuffer[CHANNEL::LEFT][n] *= drive.getValue();
 		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n]);// Rest of signal chain is linear, so output gain can be applied here.
-		theBuffer[CHANNEL::LEFT][n] *= globalOutputGain;
+		theBuffer[CHANNEL::LEFT][n] *= totalOutputGain;
 	}
 
 	// Linear Speaker Simulation
@@ -220,5 +220,5 @@ void midiCallback(MidiChannelMessage message, void *arg){
  * of the output gain and drive parameters.
  */
 void computeOutputGain(){
-	globalOutputGain = OUTPUT_GAIN*outputGain.getValue()/drive.getValue();
+	totalOutputGain = OUTPUT_GAIN*outputGain.getValue()/drive.getValue();
 }

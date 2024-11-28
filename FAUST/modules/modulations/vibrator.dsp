@@ -50,13 +50,8 @@ import("../../lib/filters.lib");
 import("../../lib/effects.lib");
 import("../../lib/math.lib");
 import("../../lib/structure.lib");
+import("../../lib/mixer.lib");
 import("stdfaust.lib");
-
-
-stereo_mixer(num_channels) = si.bus(num_channels) : par(i,N,stereo_pan(i/N)) : routing.stereo_rotate(2*N) : (sum(i,N,_),sum(i,N,_)) with {
-    N = num_channels;
-    stereo_pan(position,sig) = sig <: (*(sqrt(1-position)),*(sqrt(position)));
-};
 
 create_speaker(speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction) = speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction;
 

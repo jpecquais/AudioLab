@@ -7,8 +7,7 @@ from typing import List
 
 impulse, sample_rate = sf.read('projects/bela.PAM/ressources/impulses_responses/final_IR_1024.wav')
 
-# lambda_ = 0.15
-lambda_ = 0.75
+lambda_ = 0.15
 iir_order = 128
 fir_order = 128
 

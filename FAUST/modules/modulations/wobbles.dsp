@@ -29,18 +29,17 @@ wobbles_mono(mix,stages,freq,depth,manual,phi,sig) = sig : hilbert <: (hilbert_p
 
 wobbles_stereo(mix,stages,freq,depth,manual,phi) = par(i,2,wobbles_mono(mix,stages,freq,depth,manual,i*phi));
 
-process = wobbles_stereo(mix,stages,freq,depth,manual,spread) with {
+process = wobbles_stereo(mix,stages,freq,depth,0,spread) with {
 
     // env(rel) = si.bus(2) : + : (an.amp_follower(rel)*env_sens) ;
 
     engine_panel(x) = hgroup("[0]engine",x);
     freq = engine_panel(vslider("[0]freq",0.5,0,8,0.1));
-    depth = engine_panel(vslider("[1]depth",0.,0.,1.,0.1));
     spread = engine_panel(vslider("[2]spread",0.,0.,100,1)*0.005*ma.PI);
 
     color_panel(x) = hgroup("[1]color",x);
-    mix = color_panel(1-(vslider("[0]vibe",0,0,1,0.1))*0.5);
+    mix = color_panel(1-(vslider("[0]mix",0,0,1,0.1))*0.5);
     stages = color_panel(vslider("[1]stages",0,0,4,1));
-    manual = color_panel(vslider("[2]manual",0,-180,180,1)/180*ma.PI);
 
+    depth = 1-(stages%2)/2;//engine_panel(vslider("[1]depth",0.,0.,1.,0.1));
 };

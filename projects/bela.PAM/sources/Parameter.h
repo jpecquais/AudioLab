@@ -13,6 +13,7 @@ class IParameter{
     
     void reset(){
         setValue(m_default);
+        if (m_hasCallback) invokeCallback();
     }
 
     T getMaximum(){

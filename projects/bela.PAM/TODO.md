@@ -2,8 +2,6 @@
 
 ## 📥 Backlogs:
 
-- [ ] - Refactor IParameters::setValueFromMIDI. Conversion should be handled by another object.
-- [ ] - FIXME: Default value of parameters are not applyied to FAUSTParameters.
 
 ## 🧠 Working on:
 
@@ -11,6 +9,11 @@
   - At this point Prony and FDLS have been roughly tested, without clear improvement over trunc impulse response. FDLS tests may have bugs. 
 - [ ] - Create an AudioBuffer class.
   - The idea is to have an AudioBuffer class which can give to the user several Playback heads. Each playback head can have a read offset. First implementation could be without any interpolation.
+
+## 🛠️ To be tested:
+
+- [ ] - FIXME: Default value of parameters are not applyied to FAUSTParameters.
+- [ ] - Refactor IParameters::setValueFromMIDI. Conversion should be handled by another object.
 
 ## 💪 Done:
 

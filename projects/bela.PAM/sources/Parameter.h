@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "PamRotaryEffect.h"
+#include "range.h"
 
 template <class T>
 class IParameter{
@@ -32,8 +33,8 @@ class IParameter{
         return m_name;
     }
 
-    void setValueFromMidi(int t_value){
-        setValue(((t_value/127.)*(m_max-m_min))+m_min);
+    Range<T> getRange(){
+        return Range<T>(m_min,m_max);
     }
 
     void setCallback(std::function<void()> func){

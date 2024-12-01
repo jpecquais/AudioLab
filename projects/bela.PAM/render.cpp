@@ -7,7 +7,8 @@
 #include "sources/amp.h"
 #include "sources/input.h"
 #include "sources/PamRotaryEffect.h"
-#include "sources/Parameter.h"
+#include "sources/parameter.h"
+#include "sources/range.h"
 
 //Debug mode
 //#define DEBUG
@@ -207,7 +208,7 @@ void midiCallback(MidiChannelMessage message, void *arg){
 		#ifdef DEBUG
 			rt_printf("Is a valid CC\n");
 		#endif
-		currParam->setValueFromMidi(message.getDataByte(1));
+		currParam->setValue(mapFromMIDI<float>(message.getDataByte(1),currParam->getRange()));
 		if (currParam->hasCallback()) currParam->invokeCallback();
 	}
 }

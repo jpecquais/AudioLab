@@ -25,7 +25,7 @@
   - The issue was not comming from the float** theBuffer but from smart point pointing to address of already instanciated object.
 - [x] - Remove samplerate template from InputSection class.
 - [x] - Optimized impulse response length to limit CPU usage.
-  - [!] Solution: integrate the speaker sound inside the neural network modal. DID NOT WORK
+  - [!] Solution: integrate the speaker sound inside the neural network modal. **DID NOT WORK**
   - [x] Currently use a shorter impulse response (256 samples). **Conversion to IIR could improve fidelity to full length IR**.
 - [x] - Test input section implementation
   - Seems to work: there's signal at the output

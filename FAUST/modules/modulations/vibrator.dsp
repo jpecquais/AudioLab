@@ -136,13 +136,13 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : h
     global_head_delay = de.fdelay1(MAX_DELAY,(HEADS_DELAY:randomize(3)));
 
     //Parameters
-    slow_speed  = hslider("slow_rotation_speed",0.6,0.1,4,0.01);
-    fast_speed  = hslider("fast_rotation_speed",6,4,10,0.1);
-    slow_fast   = hslider("slow_fast",0,0,1,1);
-    is_spinning = 1-hslider("break",0,0,1,1);
-    ramp_time   = hslider("ramp_time",3,0,20,0.1);
-    treble_mix  = hslider("mix",50,0,100,0.1)/100;
-    am_depth    = 1-hslider("mic_distance",40,0,100,0.1)/100;
+    treble_mix  = hslider("[0]mix",50,0,100,0.1)/100;
+    slow_fast   = hslider("[1]slow_fast",0,0,1,1);
+    is_spinning = 1-hslider("[2]break",0,0,1,1);
+    am_depth    = 1-hslider("[3]mic_distance",40,0,100,0.1)/100;
+    slow_speed  = hslider("[4]slow_rotation_speed",1.4,0.1,4,0.01);
+    fast_speed  = hslider("[5]fast_rotation_speed",6,4,10,0.1);
+    ramp_time   = hslider("[6]ramp_time",3,0,20,0.1);
 
     rotation_speed = is_spinning*ba.if(slow_fast,fast_speed,slow_speed) : si.smooth(ba.tau2pole(ramp_time));
     gain_compensation = ba.db2linear(3*am_depth);

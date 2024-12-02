@@ -5,6 +5,7 @@
 
 ## 🧠 Working on:
 
+- [ ] - Refactor stere_mixer faust code to abstract the position of the source.
 - [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
   - At this point Prony and FDLS have been roughly tested, without clear improvement over trunc impulse response. FDLS tests may have bugs. 
 - [ ] - Create an AudioBuffer class.

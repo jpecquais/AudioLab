@@ -22,24 +22,25 @@ allpass(Q,x) = +(x'-Q*x)~(*(Q));
 allpass_section(n,Q,x) = x : seq(i,4,ba.bypass1(n<=i,allpass(Q)));
 
 wobbles_mono(mix,stages,freq,depth,manual,phi,sig) = sig : hilbert <: (hilbert_path,allpass_path) : blend.power(mix) with {
-    rotation = os.oscp(freq,phi)*ma.PI*depth+manual;//*num_revolutions;
+    rotation = (os.oscp(freq/max(stages,1),phi)*max(stages,1)*depth+manual)*ma.PI;//*num_revolutions;
     hilbert_path(real,imag) = (real,imag) : blend.angle(rotation);
     allpass_path = (_,!) : allpass_section(stages,0.96);
 };
 
 wobbles_stereo(mix,stages,freq,depth,manual,phi) = par(i,2,wobbles_mono(mix,stages,freq,depth,manual,i*phi));
 
-process = wobbles_stereo(mix,stages,freq,depth,0,spread) with {
+process = wobbles_stereo(mix,stages,freq,depth,manual,spread) with {
 
     // env(rel) = si.bus(2) : + : (an.amp_follower(rel)*env_sens) ;
 
     engine_panel(x) = hgroup("[0]engine",x);
     freq = engine_panel(vslider("[0]freq",0.5,0,8,0.1));
+    depth = engine_panel(vslider("[1]depth",0.,0.,1.,0.1));
     spread = engine_panel(vslider("[2]spread",0.,0.,100,1)*0.005*ma.PI);
 
     color_panel(x) = hgroup("[1]color",x);
     mix = color_panel(1-(vslider("[0]mix",0,0,1,0.1))*0.5);
     stages = color_panel(vslider("[1]stages",0,0,4,1));
+    manual = (stages%2)*0.5;
 
-    depth = 1-(stages%2)/2;//engine_panel(vslider("[1]depth",0.,0.,1.,0.1));
 };

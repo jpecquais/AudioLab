@@ -52,7 +52,7 @@ static float totalOutputGain = OUTPUT_GAIN;
 //Define "UI"
 static MapUI theUI;
 static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
-static Parameter<float> drive("drive",1.f,0.f,10.f);
+static Parameter<float> drive("drive",.707f,0.1f,10.f);
 static FAUSTParameter<float> mix(&theUI,"mix",25.f,0.f,100.f);
 static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
 static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);

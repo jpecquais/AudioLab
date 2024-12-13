@@ -6,6 +6,8 @@ declare version "1.00";
 
 import("stdfaust.lib");
 
+copysign(x,y) = ba.if(x>0,1,-1)*y;
+
 hilbert(sig) = real(sig),imag(sig) with {
     real(x) = x : fi.tf22t(-0.260502,0.02569,1.,0.02569,-0.260502) : fi.tf22t(0.870686,-1.8685,1.,-1.8685,0.870686);
     imag(x) = x : fi.tf22t(0.94657,-1.94632,1.,-1.94632,0.94657) : fi.tf22t(0.06338,-0.83774,1.,-0.83774,0.06338);
@@ -22,7 +24,10 @@ allpass(Q,x) = +(x'-Q*x)~(*(Q));
 allpass_section(n,Q,x) = x : seq(i,4,ba.bypass1(n<=i,allpass(Q)));
 
 wobbles_mono(mix,stages,freq,depth,manual,phi,sig) = sig : hilbert <: (hilbert_path,allpass_path) : blend.power(mix) with {
-    rotation = (os.oscp(freq/max(stages,1),phi)*max(stages,1)*depth+manual)*ma.PI;//*num_revolutions;
+    phase = phi+(stages%2==0);
+    base_lfo = os.oscp(freq,phase);
+    lfo = ba.if((stages%2==1)*(stages<1),(copysign(os.oscp(freq*0.5,phase+ma.PI*0.25),base_lfo)),base_lfo);
+    rotation = (lfo*depth+manual)*ma.PI;//*num_revolutions;
     hilbert_path(real,imag) = (real,imag) : blend.angle(rotation);
     allpass_path = (_,!) : allpass_section(stages,0.96);
 };
@@ -34,13 +39,14 @@ process = wobbles_stereo(mix,stages,freq,depth,manual,spread) with {
     // env(rel) = si.bus(2) : + : (an.amp_follower(rel)*env_sens) ;
 
     engine_panel(x) = hgroup("[0]engine",x);
-    freq = engine_panel(vslider("[0]freq",0.5,0,8,0.1));
-    depth = engine_panel(vslider("[1]depth",0.,0.,1.,0.1));
+    freq = engine_panel(vslider("[0]freq",0.5,0,4,0.1));
     spread = engine_panel(vslider("[2]spread",0.,0.,100,1)*0.005*ma.PI);
 
     color_panel(x) = hgroup("[1]color",x);
-    mix = color_panel(1-(vslider("[0]mix",0,0,1,0.1))*0.5);
+    mix = color_panel((vslider("[0]mix",0,0,1,0.1))*0.5);
     stages = color_panel(vslider("[1]stages",0,0,4,1));
-    manual = (stages%2)*0.5;
+    
+    depth = 1.;//engine_panel(vslider("[1]fast mode",1.,1.,3.,2.));
+    manual = 0;//(stages%2)*0.5;
 
 };

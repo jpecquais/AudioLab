@@ -48,10 +48,10 @@ static PamRotaryEffect theRotary;
 
 //Define "UI"
 static MapUI theUI;
-static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
-static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f);
-static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
-static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
+static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f,.1f);
+static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f,.1f);
+static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f,.1f);
+static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f,.1f);
 
 //Define MIDI
 static Midi theMidi;
@@ -94,6 +94,10 @@ bool setup(BelaContext *context, void *userData)
 void render(BelaContext *context, void *userData)
 {
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
+		mix.updateValue();
+		slowFastMode.updateValue();
+		breakMode.updateValue();
+		outputGain.updateValue();
 		// Sum both input
 		#ifndef DEBUG
 			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(audioRead(context, n, CHANNEL::LEFT),

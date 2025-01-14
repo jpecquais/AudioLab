@@ -5,7 +5,7 @@
 template <class T>
 class IParameter{
     public:
-    IParameter(std::string t_name, T t_default, T t_min, T t_max):m_name(t_name),m_value(t_default),m_min(t_min),m_max(t_max),m_default(t_default){};
+    IParameter(std::string t_name, T t_default, T t_min, T t_max, T t_alpha):m_name(t_name),m_value(t_default),m_min(t_min),m_max(t_max),m_default(t_default),m_alpha(t_alpha){};
     ~IParameter() = default;
 
     virtual void setValue(T t_newVal) = 0;
@@ -27,13 +27,17 @@ class IParameter{
         return m_name;
     }
 
+    void updateValue(){
+        m_value += (m_new_value-m_value)*m_alpha;
+    }
+
     void setValueFromMidi(int t_value){
         setValue(((t_value/127.)*(m_max-m_min))+m_min);
     }
 
     protected:
     std::string m_name;
-    T m_value, m_min, m_max, m_default;
+    T m_value, m_new_value, m_min, m_max, m_default, m_alpha;
 };
 
 template <class T>

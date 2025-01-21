@@ -5,7 +5,7 @@
 template <class T>
 class IParameter{
     public:
-    IParameter(std::string t_name, T t_default, T t_min, T t_max, T t_alpha):m_name(t_name),m_value(t_default),m_min(t_min),m_max(t_max),m_default(t_default),m_alpha(t_alpha){};
+    IParameter(std::string t_name, T t_default, T t_min, T t_max, T t_alpha):m_name(t_name),m_value(t_default),m_new_value(t_default),m_min(t_min),m_max(t_max),m_default(t_default),m_alpha(t_alpha){};
     ~IParameter() = default;
 
     virtual void setValue(T t_newVal) = 0;
@@ -43,7 +43,7 @@ class IParameter{
 template <class T>
 class Parameter : public IParameter<T>{
     public:
-    Parameter(std::string t_name, T t_default, T t_min, T t_max):IParameter<T>(t_name,t_default,t_min,t_max){};
+    Parameter(std::string t_name, T t_default, T t_min, T t_max, T t_alpha):IParameter<T>(t_name,t_default,t_min,t_max,t_alpha){};
     ~Parameter() = default;
 
     void setValue(T t_newVal){
@@ -59,7 +59,7 @@ class Parameter : public IParameter<T>{
 template <class T>
 class FAUSTParameter : public IParameter<T>{
     public:
-    FAUSTParameter(MapUI* t_faustUI, std::string t_name, T t_default, T t_min, T t_max) : IParameter<T>(t_name, t_default, t_min, t_max),m_faustUI(t_faustUI){}
+    FAUSTParameter(MapUI* t_faustUI, std::string t_name, T t_default, T t_min, T t_max, T t_alpha) : IParameter<T>(t_name, t_default, t_min, t_max,t_alpha),m_faustUI(t_faustUI){}
     ~FAUSTParameter() = default;
 
     void setValue(T t_newVal){

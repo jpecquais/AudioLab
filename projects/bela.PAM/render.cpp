@@ -10,7 +10,7 @@
 #include "sources/Parameter.h"
 
 //Debug mode
-//#define DEBUG
+// #define DEBUG
 #ifdef DEBUG
 	#include <libraries/Oscillator/Oscillator.h>
 	#include <libraries/Scope/Scope.h>
@@ -25,7 +25,7 @@ static constexpr int 			MIDI_CH						= 5;
 static const	 float	 		OUTPUT_GAIN 				= db2linear<float>(-12.f);
 static const 	 float	 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12.f)*BLACKBIRD_POLARITY;
 static const	 float	 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0.f)*CONSTABLE_POLARITY;
-static const	 std::string	MIDI_PORT					= "hw:0,0,0";
+static const	 std::string	MIDI_PORT					= "hw:1,0,0";
 static const	 std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
 
 enum CHANNEL{
@@ -49,9 +49,9 @@ static PamRotaryEffect theRotary;
 //Define "UI"
 static MapUI theUI;
 static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f,.1f);
-static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f,.1f);
-static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f,.1f);
-static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f,.1f);
+static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f,0.f);
+static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f,0.f);
+static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f,0.f);
 
 //Define MIDI
 static Midi theMidi;

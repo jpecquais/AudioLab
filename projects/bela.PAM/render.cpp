@@ -135,7 +135,7 @@ void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG
 		rt_printf("MIDI Channel: %i \n",message.getChannel());
 	#endif
-	if (message.getChannel() != MIDI_CH) return;
+	if (message.getChannel() != MIDI_CH-1) return; //Bela count midi channel from 0
 	if (message.getType() == kmmControlChange){
 		#ifdef DEBUG
 			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));

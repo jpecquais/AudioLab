@@ -32,7 +32,7 @@ stereo_mixer(num_channels) = si.bus(num_channels) : par(i,N,stereo_pan(i/N)) : r
 
 create_speaker(speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction) = speed_offset_percent,phase_offset,delay_offset,doppler_del1,doppler_del2,rotation_direction;
 
-vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : head_dry_wet : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) with {
+vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : post_filter_router : ((woofer(rotation_speed)),(global_head_delay:*(gain_compensation):head_rotors(rotation_speed,am_depth,PHASE_DEPTH))) with {
     /*
     Constant declaration
     */
@@ -71,6 +71,9 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : h
     rotation_speed: modulation frequency in Hz.
     am_depth: 0 is no tremolo effect. 1 is maximum tremolo effect.
     phase_depth: 0 is no phase modulation. 1 is maximum phase modulation. Note that depth of amplitude modulation depends on the phase depth
+
+    TODO:
+    - [ ] Gain compensation must refactorized -> it can be entirely done before the stereo split.
     */
     head_rotors(rotation_speed,am_depth,phase_depth,sig) = sig*(ba.db2linear(3*(3-N))) <: doppler : gain_compensation : hilbert_modulators with {
         N = num_head_speakers;
@@ -103,7 +106,7 @@ vibrator(f_cross,num_head_speakers,speakers,sig) = sig : crossover1(f_cross) : h
     };
 
     //Routing functions
-    head_dry_wet = (_,(_<:_,_)) : (+(_,*(sqrt(1-treble_mix))),*(sqrt(treble_mix)));
+    post_filter_router = (_,(_<:_,_)) : (+(_,*(sqrt(1-treble_mix))),*(sqrt(treble_mix)));
     stereo_reduction = ((_<:(_,_)),_,_) : ro.cross2 : (+,+);
 
     //Delay

@@ -22,6 +22,7 @@ static constexpr unsigned int 	NEURAL_NETWORK_HIDDEN_SIZE  = 8;
 static constexpr int 			BLACKBIRD_POLARITY 			= 1;
 static constexpr int 			CONSTABLE_POLARITY 			= -1;
 static constexpr int 			MIDI_CH						= 5;
+static constexpr int 			BELA_MIDI_CH				= MIDI_CH-1;  //Bela count midi channel from 0
 static const	 float	 		OUTPUT_GAIN 				= db2linear<float>(-12.f);
 static const 	 float	 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12.f)*BLACKBIRD_POLARITY;
 static const	 float	 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0.f)*CONSTABLE_POLARITY;
@@ -135,7 +136,7 @@ void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG
 		rt_printf("MIDI Channel: %i \n",message.getChannel());
 	#endif
-	if (message.getChannel() != MIDI_CH-1) return; //Bela count midi channel from 0
+	if (message.getChannel() != BELA_MIDI_CH) return;
 	if (message.getType() == kmmControlChange){
 		#ifdef DEBUG
 			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));

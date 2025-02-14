@@ -24,7 +24,7 @@
     "-I6,": "10",
     "-I7,": "10",
     "user": "",
-    "make": "CPPFLAGS = -O3 -I./ -std=c++14 -DRTNEURAL_DEFAULT_ALIGNMENT=16;",
+    "make": "CPPFLAGS = -O3 -I./ -std=c++14 -DRTNEURAL_DEFAULT_ALIGNMENT=16",
     "-X": "0",
     "audioExpander": "0",
     "-Y": "",

@@ -6,24 +6,43 @@ declare version "1.00";
 import("stdfaust.lib");
 import("../../lib/filters.lib");
 
-ramp(period,reset) = (+(0):*(reset!=1))~(+(1/(period*ma.SR))):min(1);
+/*
+TODO :
+- [ ] - Refactor peakholder and release_filter to extract of timer conditionnal dsp function.
+*/
+envelop_extractor = hilbert : (pow(2),pow(2)) : + : sqrt ;
+peak_follower(att,rel,sig) = sig : envelop_extractor : env_peak_follower(att,rel);
 
-peak_follower(attack_time,release_time,sig) = sig : envelop_extractor : peak_hold(attack_time+release_time) /*: attack_filter(attack_time) : si.onePoleSwitching(ba.tau2pole(0),ba.tau2pole(release_time))*/ with {
-    envelop_extractor(sig) = sig : hilbert : (pow(2),pow(2)) : + : sqrt ;
-    // peak_hold(hold_time,sig) = loop(sig)~(_) with {
-    //     loop(sig) = (must_hold(sig), sig) : ba.sAndH;
-    //     must_hold(sig,past_sig) = phasor(0.5,0);
-    // };
-    peak_hold(hold_time, sig) = main(sig)~(_) with {
-        main(sig,past_sig) = /*ba.sAndH(must_release,sig)*/ must_release with {
-            must_release = ramp(hold_time,>(sig,past_sig)); //TODO: Problem is here.
-        } ;
+//Time parameter are expected in secondes
+env_peak_follower(att,rel,sig) = sig : peakholder : attack_filter : release_filter with {
+    attack_time = att*ma.SR; //smpls
+    release_time = rel*ma.SR; // smpls
+    envelop_time = attack_time + release_time; //smpls
+    attack_filter_freq = 1/att; // Hz
+
+    peakholder(x) = loop ~ si.bus(2) : ! , _ with {
+        loop(timerState, outState) = timer , output with {
+                is_new_peak = x >= outState;
+                is_time_out = timerState >= attack_time;
+                bypass = is_new_peak | is_time_out;
+                timer = ba.if(bypass, 0, timerState + 1);
+                output = ba.if(bypass, x, outState);
+        };
+    };  
+
+    attack_filter = fi.lowpass(1,attack_filter_freq);
+    release_filter(x) = loop~_ : !, _ with {
+        loop(timeState) = timer, output with {
+            is_time_out = timeState >= envelop_time;
+            is_not_time_to_release = timeState < attack_time & is_time_out;
+            bypass = is_not_time_to_release;
+            timer = ba.if(is_time_out, 0, timeState + 1);
+            output = ba.if(bypass, x, si.onePoleSwitching(0,rel,x));
+        };
     };
-    attack_filter(t,sig) = sig : fi.lowpass(1,1/t) ;
-    //peak_env(p,sig) = sig : (max:*(p))~(_) ;
 };
 
 process = peak_follower(attack_time,release_time) with {
-    attack_time = hslider("attack_time",0.001,0,1,0.01);
-    release_time = hslider("release_time",0.01,0,1,0.01);
+    attack_time = hslider("attack_time",0.1,0,100,0.1)/1000;
+    release_time = hslider("release_time",0.1,0,1000,0.1)/1000;
 };

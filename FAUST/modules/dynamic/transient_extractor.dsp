@@ -6,22 +6,8 @@ declare version "1.00";
 import("stdfaust.lib");
 import("../../lib/filters.lib");
 
-/*
-TODO :
-- [ ] - Refactor peakholder and release_filter to extract of timer conditionnal dsp function.
-*/
 envelop_extractor = hilbert : (pow(2),pow(2)) : + : sqrt ;
 peak_follower(att,rel,sig) = sig : envelop_extractor : env_peak_follower(att,rel);
-
-// timer_based_process(start_time,end_time,reset,processor,sig) = loop ~ si.bus(2) : !, _ with {
-//         loop(timer_state, out_state) = timer , output with {
-//                 is_time_out = timer_state >= end_time;
-//                 is_not_time_to_process = timer_state < start_time & is_time_out;
-//                 reset_counter = reset | is_not_time_to_process;
-//                 timer = ba.if(is_time_out, 0, timer_state + 1);
-//                 output = ba.if(reset_counter, x, x : processor);
-//         };
-// };
 
 // Time parameter are expected in secondes
 env_peak_follower(att,rel,sig) = sig : peakholder : si.onePoleSwitching(att,rel) with {
@@ -33,18 +19,17 @@ env_peak_follower(att,rel,sig) = sig : peakholder : si.onePoleSwitching(att,rel)
     attack_filter_freq = 1/att; // Hz
     release_filter_freq = 1/rel; // Hz
 
-    peakholder(x) = loop ~ si.bus(2) : ! , _ with {
+    peakholder(sig) = loop ~ si.bus(2) : ! , _ with {
         loop(timer_state, out_state) = timer, sample_signal with {
-            is_new_peak = x >= out_state;
-            is_attack_time_over = timer_state > attack_time;
+            is_new_peak = sig >= out_state;
+            is_attack_time_over = timer_state >= attack_time;
 
             resample_input = is_new_peak | is_attack_time_over;
 
             timer = ba.if(resample_input, 0, timer_state + 1);
-            sample_signal = ba.if(resample_input, x, out_state);
+            sample_signal = ba.if(resample_input, sig, out_state);
         };
     };
-    
 };
     
 

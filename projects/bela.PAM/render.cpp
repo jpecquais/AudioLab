@@ -8,6 +8,8 @@
 #include "sources/input.h"
 #include "sources/PamRotaryEffect.h"
 #include "sources/Parameter.h"
+#include "sources/buffer_helper.h"
+
 
 //Debug mode
 // #define DEBUG
@@ -35,7 +37,14 @@ enum CHANNEL{
 	STEREO = 2
 };
 
-static float **theBuffer = nullptr; //TODO: should be refactorized with smart pointer.
+static float** theBuffer = nullptr; //main buffer
+static float** bypassBuffer = nullptr; //to bypass effects.
+
+// Additionnal pointers to handle dynamic routing
+static float** amp_input_buffer = theBuffer;
+static float** amp_output_buffer = theBuffer;
+static float** cabinet_input_buffer = theBuffer;
+static float** cabinet_output_buffer = theBuffer;
 
 //Instanciation of main dsp objects
 #ifdef DEBUG
@@ -47,7 +56,7 @@ static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
 static PamRotaryEffect theRotary;
 
-//Define "UI"
+//Define DSP Controller
 static MapUI theUI;
 static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f,.1f);
 static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f,0.f);
@@ -81,35 +90,28 @@ bool setup(BelaContext *context, void *userData)
 
 	//Init dsp blocks
 	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
-	theAmp.setup();
+	theAmp.setup(context->audioFrames);
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, context->audioFrames, MAX_IMPULSE_LENGTH);
 	theRotary.init(context->audioSampleRate);
 	theRotary.buildUserInterface(&theUI);
+
+	//allocate buffers
 	theBuffer = new float*[CHANNEL::STEREO];
+	bypassBuffer = new float*[CHANNEL::STEREO];
 	for (int i = 0; i < CHANNEL::STEREO; i++) {
 		theBuffer[i] = new float[context->audioFrames];
+		bypassBuffer[i] = new float[context->audioFrames];
 	}
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		mix.updateValue();
-		slowFastMode.updateValue();
-		breakMode.updateValue();
-		outputGain.updateValue();
-		// Sum both input
-		#ifndef DEBUG
-			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(audioRead(context, n, CHANNEL::LEFT),
-				  												  audioRead(context, n, CHANNEL::RIGHT));
-		#else
-			theBuffer[CHANNEL::LEFT][n] = theInputSection.process(osc.process()*0.25,0); //sine generator
-		#endif
-		// Power Amp & Speaker Simulation
-		theBuffer[CHANNEL::LEFT][n] = theAmp.process(&theBuffer[CHANNEL::LEFT][n])*OUTPUT_GAIN*outputGain.getValue(); // Rest of signal chain is linear, so output gain can be applied here.
-	}
-	// Linear Speaker Simulation
+	outputGain.updateValue(); //for smooth gain operation
+
+	uninterleaved(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
+	theInputSection.process(theBuffer,theBuffer);
+	theAmp.process(theBuffer,theBuffer);
 	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
 
@@ -117,8 +119,9 @@ void render(BelaContext *context, void *userData)
 		#ifdef DEBUG
 			scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
 		#endif
+
 		audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]);
-		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]); // Should be the right channel in theBuffer.
+		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]);
 	}
 }
 
@@ -126,10 +129,14 @@ void cleanup(BelaContext *context, void *userData)
 {
 	for (int i=0; i<CHANNEL::STEREO;i++){
 		delete[] theBuffer[i];
+		delete[] bypassBuffer[i];
 		theBuffer[i] = nullptr;
+		bypassBuffer[i] = nullptr;
 	}
 	delete[] theBuffer;
+	delete[] bypassBuffer;
 	theBuffer = nullptr;
+	bypassBuffer = nullptr;
 }
 
 void midiCallback(MidiChannelMessage message, void *arg){

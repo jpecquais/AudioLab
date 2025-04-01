@@ -8,12 +8,13 @@ static constexpr int NUM_BIQUAD_2 = 3;
 
 template <class T>
 class InputSection{
-    public:
+public:
     InputSection() : m_numAllpasses_1{NUM_BIQUAD_1},m_numAllpasses_2{NUM_BIQUAD_1}{}
     ~InputSection() = default;
 
-    void setup(T fs, T t_gainIn1, T t_gainIn2){
+    void setup(T fs, int new_block_size, T t_gainIn1, T t_gainIn2){
         m_fs = fs;
+        block_size = new_block_size;
         m_ts = 1./fs;
         m_gainIn1 = t_gainIn1;
         m_gainIn2 = t_gainIn2;
@@ -37,7 +38,21 @@ class InputSection{
 
         return in1*m_gainIn1+in2*m_gainIn2;
     }
-    private:
+
+    process(T** input_buffer, T** output_buffer)
+    {
+        for (int i = 0; i < block_size; i++)
+        {
+            output_buffer[0][i] = process(input_buffer[0][i],input_buffer[1][i]);
+            output_buffer[1][i] = 0;
+        }
+    }
+
+private:
+    static constexpr int NUM_INPUT_CHANNEL = 2;
+    static constexpr int NUM_OUTPUT_CHANNEL = 1;
+
+    int block_size;
     const int m_numAllpasses_1;
     const int m_numAllpasses_2;
     T m_fs, m_ts;

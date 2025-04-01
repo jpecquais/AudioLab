@@ -28,6 +28,7 @@ class IParameter{
     }
 
     void updateValue(){
+        if (m_new_value == m_value) return;
         m_value += (m_new_value-m_value)*m_alpha;
     }
 
@@ -47,7 +48,7 @@ class Parameter : public IParameter<T>{
     ~Parameter() = default;
 
     void setValue(T t_newVal){
-        this->m_value = std::max<T>(std::min<T>(t_newVal,this->m_max),this->m_min);
+        this->m_new_value = std::max<T>(std::min<T>(t_newVal,this->m_max),this->m_min);
     }
 
     T getValue(){

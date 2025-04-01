@@ -107,21 +107,26 @@ bool setup(BelaContext *context, void *userData)
 
 void render(BelaContext *context, void *userData)
 {
-	outputGain.updateValue(); //for smooth gain operation
-
+	
 	uninterleaved(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
 	theInputSection.process(theBuffer,theBuffer);
-	theAmp.process(theBuffer,theBuffer);
-	theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames);
+	theAmp.process(amp_input_buffer,amp_output_buffer);
+	theCabinet.process(cabinet_input_buffer[0],cabinet_output_buffer[0],context->audioFrames);
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
-
+	
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		#ifdef DEBUG
-			scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
+		scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
 		#endif
+		
+		outputGain.updateValue(); //for smooth gain operation
+		currentOutputGain = outputGain.getValue();
 
-		audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]);
-		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]);
+		float leftSample = theBuffer[CHANNEL::LEFT][n] * currentOutputGain;
+        float rightSample = theBuffer[CHANNEL::RIGHT][n] * currentOutputGain;
+
+		audioWrite(context, n, CHANNEL::LEFT, leftSample);
+		audioWrite(context, n, CHANNEL::RIGHT, rightSample);
 	}
 }
 

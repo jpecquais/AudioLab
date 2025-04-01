@@ -25,11 +25,11 @@ public:
         return model.forward(pInput);
     }
 
-    process(T** input_buffer, process T** output_buffer)
+    void process(T** input_buffer, T** output_buffer)
     {
-        for (int i; i < block_size; i++)
+        for (int i = 0; i < block_size; i++)
         {
-            output_buffer[0][i] = process(&input[0][i])
+            output_buffer[0][i] = process(input_buffer[0]+i);
         }
     }
 

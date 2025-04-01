@@ -39,7 +39,7 @@ public:
         return in1*m_gainIn1+in2*m_gainIn2;
     }
 
-    process(T** input_buffer, T** output_buffer)
+    void process(T** input_buffer, T** output_buffer)
     {
         for (int i = 0; i < block_size; i++)
         {

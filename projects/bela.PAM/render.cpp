@@ -41,10 +41,10 @@ static float** theBuffer = nullptr; //main buffer
 static float** bypassBuffer = nullptr; //to bypass effects.
 
 // Additionnal pointers to handle dynamic routing
-static float** amp_input_buffer = theBuffer;
-static float** amp_output_buffer = theBuffer;
-static float** cabinet_input_buffer = theBuffer;
-static float** cabinet_output_buffer = theBuffer;
+static float** amp_input_buffer = nullptr;
+static float** amp_output_buffer = nullptr;
+static float** cabinet_input_buffer = nullptr;
+static float** cabinet_output_buffer = nullptr;
 
 //Instanciation of main dsp objects
 #ifdef DEBUG
@@ -56,12 +56,38 @@ static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
 static PamRotaryEffect theRotary;
 
+void BypassStateFunction(int state, float**& input_buffer, float**& output_buffer)
+{
+    if (state)
+    {
+        input_buffer = theBuffer;
+        output_buffer = theBuffer;
+    }
+    else
+    {
+        input_buffer = bypassBuffer;
+        output_buffer = bypassBuffer;
+    }
+}
+
+using BypassCallback = std::function<void(int)>;
+BypassCallback set_amp_bypass_state = [](int state)
+{
+    BypassStateFunction(state, amp_input_buffer, amp_output_buffer);
+};
+BypassCallback set_cab_bypass_state = [](int state)
+{
+	BypassStateFunction(state, cabinet_input_buffer, cabinet_output_buffer);
+};
+
 //Define DSP Controller
 static MapUI theUI;
-static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f,.1f);
-static FAUSTParameter<float> mix(&theUI,"mix",50.f,0.f,100.f,0.f);
-static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f,0.f);
-static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f,0.f);
+static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
+static FAUSTParameter<float> mix(&theUI,"mix",20.f,0.f,100.f);
+static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
+static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
+static CallbackParameter<float,BypassCallback> amp_bypass(set_amp_bypass_state,"bypass_amp",0,0,1);
+static CallbackParameter<float,BypassCallback> cab_bypass(set_cab_bypass_state,"bypass_cab",0,0,1);
 
 //Define MIDI
 static Midi theMidi;
@@ -80,16 +106,20 @@ bool setup(BelaContext *context, void *userData)
 	theMidi.readFrom(MIDI_PORT.c_str());
 	theMidi.writeTo(MIDI_PORT.c_str());
 	theMidi.enableParser(true);
+
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
+
 	//Bind parameters to midi CC number.
 	ccToParameters[0] = &mix;
 	ccToParameters[1] = &slowFastMode;
 	ccToParameters[2] = &breakMode;
+	ccToParameters[3] = &amp_bypass;
+	ccToParameters[4] = &cab_bypass;
 	ccToParameters[7] = &outputGain;
 
 	//Init dsp blocks
-	theInputSection.setup(context->audioSampleRate,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
+	theInputSection.setup(context->audioSampleRate,context->audioFrames,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
 	theAmp.setup(context->audioFrames);
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, context->audioFrames, MAX_IMPULSE_LENGTH);
 	theRotary.init(context->audioSampleRate);
@@ -102,13 +132,18 @@ bool setup(BelaContext *context, void *userData)
 		theBuffer[i] = new float[context->audioFrames];
 		bypassBuffer[i] = new float[context->audioFrames];
 	}
+
+	amp_input_buffer = theBuffer;
+	amp_output_buffer = theBuffer;
+	cabinet_input_buffer = theBuffer;
+	cabinet_output_buffer = theBuffer;
+
 	return true;
 }
 
 void render(BelaContext *context, void *userData)
 {
-	
-	uninterleaved(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
+	bela_uninterleaved_input_buffer<float>(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
 	theInputSection.process(theBuffer,theBuffer);
 	theAmp.process(amp_input_buffer,amp_output_buffer);
 	theCabinet.process(cabinet_input_buffer[0],cabinet_output_buffer[0],context->audioFrames);
@@ -118,9 +153,8 @@ void render(BelaContext *context, void *userData)
 		#ifdef DEBUG
 		scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
 		#endif
-		
-		outputGain.updateValue(); //for smooth gain operation
-		currentOutputGain = outputGain.getValue();
+
+		auto currentOutputGain = outputGain.getValue()*OUTPUT_GAIN;
 
 		float leftSample = theBuffer[CHANNEL::LEFT][n] * currentOutputGain;
         float rightSample = theBuffer[CHANNEL::RIGHT][n] * currentOutputGain;

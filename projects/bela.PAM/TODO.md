@@ -6,8 +6,15 @@
 
 ## Working on:
 
+- [ ] - Implement bypass for amp and cab sim
+  - Work as a bypass -> meaning it does not disable the process computation. We want constant workload.
+  - [ ] - Need to implement a callback system in the Param class.
+
+## Stucked
+
 - [ ] - Implement a FIR to parallel biquad converter (Prony algorithm)
   - At this point Prony and FDLS have been roughly tested, without clear improvement over trunc impulse response. FDLS tests may have bugs. 
+  - should investigate FFT based convolution algorithm
 
 ## Done:
 

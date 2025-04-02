@@ -86,7 +86,7 @@ BypassCallback set_cab_bypass_state = [](int state)
 using GainCallback = std::function<void(float)>;
 GainCallback set_output_gain = [](float new_val)
 {
-	theOutputGain.set(new_val*OUTPUT_GAIN);
+	theOutputGain.set(new_val);
 };
 
 //Define DSP Controller
@@ -168,8 +168,8 @@ void render(BelaContext *context, void *userData)
 		scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
 		#endif
 
-		audioWrite(context, n, CHANNEL::LEFT, leftSample);
-		audioWrite(context, n, CHANNEL::RIGHT, rightSample);
+		audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]*OUTPUT_GAIN);
+		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]*OUTPUT_GAIN);
 	}
 }
 

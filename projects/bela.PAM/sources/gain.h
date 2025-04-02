@@ -7,6 +7,12 @@ public:
     Gain():block_size(32),m_value(1),m_target_value(1),m_interpolation_factor(0.7){}
     ~Gain() = default;
 
+    void setup(int new_block_size, T new_interpolation_factor)
+    {
+        block_size = new_block_size;
+        m_interpolation_factor = 1-new_interpolation_factor;
+    }
+
     void set(T new_value)
     {
         m_target_value = new_value;

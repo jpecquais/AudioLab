@@ -9,13 +9,15 @@
 #include "sources/PamRotaryEffect.h"
 #include "sources/Parameter.h"
 #include "sources/buffer_helper.h"
+#include "sources/gain.h"
 
 
 //Debug mode
-// #define DEBUG
-#ifdef DEBUG
-	#include <libraries/Oscillator/Oscillator.h>
-	#include <libraries/Scope/Scope.h>
+// #define DEBUG_AUDIO
+// #define DEBUG_CTRL
+#ifdef DEBUG_AUDIO
+#include <libraries/Oscillator/Oscillator.h>
+#include <libraries/Scope/Scope.h>
 #endif
 
 //Constant Declaration
@@ -48,13 +50,14 @@ static float** cabinet_output_buffer = nullptr;
 
 //Instanciation of main dsp objects
 #ifdef DEBUG
-	Oscillator osc;
-	Scope scope;
+Oscillator osc;
+Scope scope;
 #endif
 static InputSection<float> theInputSection;
 static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
 static PamRotaryEffect theRotary;
+static Gain<float,CHANNEL::STEREO> theOutputGain;
 
 void BypassStateFunction(int state, float**& input_buffer, float**& output_buffer)
 {
@@ -80,12 +83,18 @@ BypassCallback set_cab_bypass_state = [](int state)
 	BypassStateFunction(state, cabinet_input_buffer, cabinet_output_buffer);
 };
 
+using GainCallback = std::function<void(float)>;
+GainCallback set_output_gain = [](float new_val)
+{
+	theOutputGain.set(new_val*OUTPUT_GAIN);
+};
+
 //Define DSP Controller
 static MapUI theUI;
-static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
 static FAUSTParameter<float> mix(&theUI,"mix",20.f,0.f,100.f);
 static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
 static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
+static CallbackParameter<float,GainCallback> outputGain(set_output_gain,"OutputGain",1.f,0.f,1.f);
 static CallbackParameter<float,BypassCallback> amp_bypass(set_amp_bypass_state,"bypass_amp",0,0,1);
 static CallbackParameter<float,BypassCallback> cab_bypass(set_cab_bypass_state,"bypass_cab",0,0,1);
 
@@ -96,12 +105,15 @@ static void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
 {
-	#ifdef DEBUG
-		osc.setup(context->audioSampleRate, Oscillator::sine);
-		osc.setFrequency(440);
-		osc.setPhase(0);
-		scope.setup(2, context->audioSampleRate);
+	#ifdef DEBUG_AUDIO
+	osc.setup(context->audioSampleRate, Oscillator::sine);
+	osc.setFrequency(440);
+	osc.setPhase(0);
+	scope.setup(2, context->audioSampleRate);
 	#endif
+
+	auto current_sample_rate = context->audioSampleRate;
+	auto current_buffer_size = context->audioFrames;
 
 	theMidi.readFrom(MIDI_PORT.c_str());
 	theMidi.writeTo(MIDI_PORT.c_str());
@@ -119,18 +131,19 @@ bool setup(BelaContext *context, void *userData)
 	ccToParameters[7] = &outputGain;
 
 	//Init dsp blocks
-	theInputSection.setup(context->audioSampleRate,context->audioFrames,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
-	theAmp.setup(context->audioFrames);
-	theCabinet.setup(IMPULSE_RESPONSE_PATH, context->audioFrames, MAX_IMPULSE_LENGTH);
-	theRotary.init(context->audioSampleRate);
+	theInputSection.setup(current_sample_rate,current_buffer_size,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
+	theAmp.setup(current_buffer_size);
+	theCabinet.setup(IMPULSE_RESPONSE_PATH, current_buffer_size, MAX_IMPULSE_LENGTH);
+	theRotary.init(current_sample_rate);
 	theRotary.buildUserInterface(&theUI);
+	theOutputGain.setup(current_buffer_size,0.7);
 
 	//allocate buffers
 	theBuffer = new float*[CHANNEL::STEREO];
 	bypassBuffer = new float*[CHANNEL::STEREO];
 	for (int i = 0; i < CHANNEL::STEREO; i++) {
-		theBuffer[i] = new float[context->audioFrames];
-		bypassBuffer[i] = new float[context->audioFrames];
+		theBuffer[i] = new float[current_buffer_size];
+		bypassBuffer[i] = new float[current_buffer_size];
 	}
 
 	amp_input_buffer = theBuffer;
@@ -148,16 +161,12 @@ void render(BelaContext *context, void *userData)
 	theAmp.process(amp_input_buffer,amp_output_buffer);
 	theCabinet.process(cabinet_input_buffer[0],cabinet_output_buffer[0],context->audioFrames);
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
+	theOutputGain.process(theBuffer,theBuffer);
 	
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
-		#ifdef DEBUG
+		#ifdef DEBUG_AUDIO
 		scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
 		#endif
-
-		auto currentOutputGain = outputGain.getValue()*OUTPUT_GAIN;
-
-		float leftSample = theBuffer[CHANNEL::LEFT][n] * currentOutputGain;
-        float rightSample = theBuffer[CHANNEL::RIGHT][n] * currentOutputGain;
 
 		audioWrite(context, n, CHANNEL::LEFT, leftSample);
 		audioWrite(context, n, CHANNEL::RIGHT, rightSample);
@@ -179,18 +188,18 @@ void cleanup(BelaContext *context, void *userData)
 }
 
 void midiCallback(MidiChannelMessage message, void *arg){
-	#ifdef DEBUG
-		rt_printf("MIDI Channel: %i \n",message.getChannel());
+	#ifdef DEBUG_CTRL
+	rt_printf("MIDI Channel: %i \n",message.getChannel());
 	#endif
 	if (message.getChannel() != BELA_MIDI_CH) return;
 	if (message.getType() == kmmControlChange){
-		#ifdef DEBUG
-			rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
+		#ifdef DEBUG_CTRL
+		rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
 		#endif
 		auto& currParam = ccToParameters[message.getDataByte(0)];
 		if (currParam == nullptr) return;
-		#ifdef DEBUG
-			rt_printf("Is a valid CC\n");
+		#ifdef DEBUG_CTRL
+		rt_printf("Is a valid CC\n");
 		#endif
 		currParam->setValueFromMidi(message.getDataByte(1));
 	}

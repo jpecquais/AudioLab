@@ -4,9 +4,68 @@ declare copyright "MyCompany";
 declare version "1.00";
 // declare license "BSD"; 
 
+/* 
+TODOLIST:
+
+- [x] : Remove mix parameter
+- [x] : Remove manual parameter
+- [ ] : implement internal frequency control of allpasses
+
+*/
+
 import("stdfaust.lib");
 
-copysign(x,y) = ba.if(x>0,1,-1)*y;
+lf_random(freq) = no.noise : peakholder : fi.lowpass(1,freq) with {
+    hold_time = 1/freq*ma.SR;
+    peakholder(sig) = loop ~ si.bus(2) : ! , _ with {
+        loop(timer_state, out_state) = timer, sample_signal with {
+            is_time_out = timer_state >= hold_time;
+
+            resample_input = is_time_out;
+
+            timer = ba.if(resample_input, 0, timer_state + 1);
+            sample_signal = ba.if(resample_input, sig, out_state);
+        };
+    };
+};
+
+multi_lfo(freq,phase,amplitude,is_unipolar,shape) = selected_lfo with {
+
+    NUM_OF_LFO = 2;
+
+    unipolar_lfo(x) = x*(is_unipolar+(1-is_unipolar)*(0.5))+0.5*(1-is_unipolar);
+    bipolar_lfo(x) = x*(1-is_unipolar+(is_unipolar)*(0.5))+0.5*(is_unipolar);
+
+    triangle = os.lf_triangle(freq)*amplitude+phase;
+    saw = os.lf_sawpos(freq)*amplitude;
+
+    selected_lfo = (triangle,saw) : ba.selectn(NUM_OF_LFO,shape);
+
+};
+
+envelop_extractor = hilbert : (pow(2),pow(2)) : + : sqrt ;
+
+// Time parameter are expected in secondes
+peak_follower(att,rel,sig) = sig : envelop_extractor : peakholder : si.onePoleSwitching(att,rel) with {
+    //Constant declaration
+    attack_time = att*ma.SR; //smpls
+    release_time = rel*ma.SR; // smpls
+    envelop_time = attack_time + release_time; //smpls
+    attack_filter_freq = 1/att; // Hz
+    release_filter_freq = 1/rel; // Hz
+
+    peakholder(sig) = loop ~ si.bus(2) : ! , _ with {
+        loop(timer_state, out_state) = timer, sample_signal with {
+            is_new_peak = sig >= out_state;
+            is_attack_time_over = timer_state >= attack_time;
+
+            resample_input = is_new_peak | is_attack_time_over;
+
+            timer = ba.if(resample_input, 0, timer_state + 1);
+            sample_signal = ba.if(resample_input, sig, out_state);
+        };
+    };
+};
 
 hilbert(sig) = real(sig),imag(sig) with {
     real(x) = x : fi.tf22t(-0.260502,0.02569,1.,0.02569,-0.260502) : fi.tf22t(0.870686,-1.8685,1.,-1.8685,0.870686);
@@ -23,30 +82,70 @@ blend = environment {
 allpass(Q,x) = +(x'-Q*x)~(*(Q));
 allpass_section(n,Q,x) = x : seq(i,4,ba.bypass1(n<=i,allpass(Q)));
 
-wobbles_mono(mix,stages,freq,depth,manual,phi,sig) = sig : hilbert <: (hilbert_path,allpass_path) : blend.power(mix) with {
-    phase = phi+(stages%2==0);
-    base_lfo = os.oscp(freq,phase);
-    lfo = ba.if((stages%2==1)*(stages<1),(copysign(os.oscp(freq*0.5,phase+ma.PI*0.25),base_lfo)),base_lfo);
-    rotation = (lfo*depth+manual)*ma.PI;//*num_revolutions;
-    hilbert_path(real,imag) = (real,imag) : blend.angle(rotation);
-    allpass_path = (_,!) : allpass_section(stages,0.96);
+wobbles_mono(mode,freq,intensity,phase,sig) = sig : hilbert <: (hilbert_path,allpass_path) : blend.power(mix) with {
+
+    NUM_MODES = 5;
+    NUM_MODES_PROPERTIES = 5;
+
+    lfo_shape = 0;//vslider("[3]lfo_shape",0,0,1,1);
+    is_barberpol = lfo_shape == 1;
+
+    vibrato_mode = lfo_maximum,lfo_phase_offset,num_stages,mix,f_ratio with {
+        lfo_maximum = ba.if(is_barberpol,1,intensity)*2*ma.PI;
+        lfo_phase_offset = 0;
+        num_stages = 0;
+        mix = 1;
+        f_ratio = 1;
+    };
+    tremolo_mode = lfo_maximum,lfo_phase_offset,num_stages,mix,f_ratio with {
+        lfo_maximum = ma.PI;
+        lfo_phase_offset = 0;
+        num_stages = 0;
+        mix = 0.5*intensity;
+        f_ratio = 0.75;
+    };
+    harmtrem_mode = lfo_maximum,lfo_phase_offset,num_stages,mix,f_ratio with {
+        lfo_maximum = ba.if(is_barberpol,2,0.5)*ma.PI;
+        lfo_phase_offset = -0.5*ma.PI;
+        num_stages = 1;
+        mix = 0.5*intensity;
+        f_ratio = 1.5;
+    };
+    two_phasor_mode = lfo_maximum,lfo_phase_offset,num_stages,mix,f_ratio with {
+        lfo_maximum = ba.if(is_barberpol,2,1)*ma.PI;
+        lfo_phase_offset = 0;
+        num_stages = 2;
+        mix = 0.5*intensity;
+        f_ratio = 1;
+    };
+    four_phasor_mode = lfo_maximum,lfo_phase_offset,num_stages,mix,f_ratio with {
+        lfo_maximum = ba.if(is_barberpol,2,1)*ma.PI;
+        lfo_phase_offset = 0;
+        num_stages = 4;
+        mix = 0.5*intensity;
+        f_ratio = 1;
+    };
+
+    current_mode = (vibrato_mode,tremolo_mode,harmtrem_mode,two_phasor_mode,four_phasor_mode) : ba.selectbus(NUM_MODES_PROPERTIES,NUM_MODES,mode);
+    lfo_maximum = ba.selectn(NUM_MODES_PROPERTIES,0,current_mode);
+    lfo_phase_offset = ba.selectn(NUM_MODES_PROPERTIES,1,current_mode);
+    num_stages = ba.selectn(NUM_MODES_PROPERTIES,2,current_mode);
+    mix = ba.selectn(NUM_MODES_PROPERTIES,3,current_mode);
+    f_ratio = ba.selectn(NUM_MODES_PROPERTIES,4,current_mode);
+
+    actual_freq = freq*f_ratio;
+    lfo = multi_lfo(actual_freq,lfo_phase_offset,lfo_maximum,0,lfo_shape);
+
+    hilbert_path(real,imag) = (real,imag) : blend.angle(lfo);
+    allpass_path(real,imag) = (real, (imag : !)) : allpass_section(num_stages,0.96);
+
 };
 
-wobbles_stereo(mix,stages,freq,depth,manual,phi) = par(i,2,wobbles_mono(mix,stages,freq,depth,manual,i*phi));
+// process = lf_random(freq) <: _,_ with {
+process = wobbles_mono(stages,freq,depth,0) <: _,_ with {
 
-process = wobbles_stereo(mix,stages,freq,depth,manual,spread) with {
-
-    // env(rel) = si.bus(2) : + : (an.amp_follower(rel)*env_sens) ;
-
-    engine_panel(x) = hgroup("[0]engine",x);
-    freq = engine_panel(vslider("[0]freq",0.5,0,4,0.1));
-    spread = engine_panel(vslider("[2]spread",0.,0.,100,1)*0.005*ma.PI);
-
-    color_panel(x) = hgroup("[1]color",x);
-    mix = color_panel((vslider("[0]mix",0,0,1,0.1))*0.5);
-    stages = color_panel(vslider("[1]stages",0,0,4,1));
-    
-    depth = 1.;//engine_panel(vslider("[1]fast mode",1.,1.,3.,2.));
-    manual = 0;//(stages%2)*0.5;
+    freq = vslider("[0]freq",1.2,0,16,0.1);
+    depth = vslider("[1]depth",0.5,0.,1.,0.1);
+    stages = vslider("[2]mode",2,0,4,1);
 
 };

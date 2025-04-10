@@ -15,42 +15,53 @@ TODOLIST:
 
 import("stdfaust.lib");
 
-// Time parameter are expected in secondes
-peak_follower(att,rel,sig) = sig : envelop_extractor : peakholder : si.onePoleSwitching(att,rel) with {
-    //Constant declaration
-    attack_time = att*ma.SR; //smpls
-    release_time = rel*ma.SR; // smpls
-    envelop_time = attack_time + release_time; //smpls
-    attack_filter_freq = 1/att; // Hz
-    release_filter_freq = 1/rel; // Hz
 
-    peakholder(sig) = loop ~ si.bus(2) : ! , _ with {
-        loop(timer_state, out_state) = timer, sample_signal with {
-            is_new_peak = sig >= out_state;
-            is_attack_time_over = timer_state >= attack_time;
+hilbert(sig) = real(sig),imag(sig) with {
+    real(x) = x : fi.tf22t(-0.260502,0.02569,1.,0.02569,-0.260502) : fi.tf22t(0.870686,-1.8685,1.,-1.8685,0.870686);
+    imag(x) = x : fi.tf22t(0.94657,-1.94632,1.,-1.94632,0.94657) : fi.tf22t(0.06338,-0.83774,1.,-0.83774,0.06338);
+};
 
-            resample_input = is_new_peak | is_attack_time_over;
+envelop = environment{
 
-            timer = ba.if(resample_input, 0, timer_state + 1);
-            sample_signal = ba.if(resample_input, sig, out_state);
+    envelop_extractor = hilbert : (pow(2),pow(2)) : + : sqrt ;
+        // Time parameter are expected in secondes
+    peak_follower(att,rel,sig) = sig : envelop_extractor : peakholder : si.onePoleSwitching(att,rel) with {
+        //Constant declaration
+        attack_time = att*ma.SR; //smpls
+        release_time = rel*ma.SR; // smpls
+        envelop_time = attack_time + release_time; //smpls
+        attack_filter_freq = 1/att; // Hz
+        release_filter_freq = 1/rel; // Hz
+
+        peakholder(sig) = loop ~ si.bus(2) : ! , _ with {
+            loop(timer_state, out_state) = timer, sample_signal with {
+                is_new_peak = sig >= out_state;
+                is_attack_time_over = timer_state >= attack_time;
+
+                resample_input = is_new_peak | is_attack_time_over;
+
+                timer = ba.if(resample_input, 0, timer_state + 1);
+                sample_signal = ba.if(resample_input, sig, out_state);
+            };
         };
     };
+
+    rms_follower(rms_size,sig) = sig : envelop_extractor : ba.slidingRMS(rms_size_spl) with {
+        rms_size_spl = rms_size*ma.SR;
+    };
+
+    crest_factor(window_size,sig) = (crest / rms) with {
+        attack_time = 0.001;
+        release_time = 0.2;
+        crest = sig : peak_follower(attack_time,release_time);
+        rms = rms_follower(window_size,sig) + ma.EPSILON;
+    };
+
+    power_crest_factor(release_time,sig) = sig : pow(2) : crest_factor(release_time) : sqrt;
+
+    transient(window_len,sig) = sig : power_crest_factor(window_len);
 };
 
-rms_follower(rms_size,sig) = sig : envelop_extractor : ba.slidingRMS(rms_size_spl,3*48000+1) with {
-    rms_size_spl = rms_size*ma.SR;
-};
-
-crest_factor(window_size,sig) = (crest / rms) with {
-    attack_time = 0.001;
-    release_time = 0.2;
-    crest = sig : peak_follower(attack_time,release_time);
-    rms = rms_follower(window_size,abs(sig)) + ma.EPSILON;
-};
-
-power_crest_factor(release_time,sig) = sig : pow(2) : crest_factor(release_time) : sqrt;
-
-transient(window_len,sig) = sig : power_crest_factor(window_len);
 
 lf_random(freq) = no.noise : peakholder : fi.lowpass(1,freq) with {
     hold_time = 1/freq*ma.SR;
@@ -80,13 +91,6 @@ multi_lfo(freq,amplitude,offset,is_unipolar,shape) = selected_lfo with {
 
     selected_lfo = (sine,saw) : ba.selectn(NUM_OF_LFO,actual_shape);
 
-};
-
-envelop_extractor = hilbert : (pow(2),pow(2)) : + : sqrt ;
-
-hilbert(sig) = real(sig),imag(sig) with {
-    real(x) = x : fi.tf22t(-0.260502,0.02569,1.,0.02569,-0.260502) : fi.tf22t(0.870686,-1.8685,1.,-1.8685,0.870686);
-    imag(x) = x : fi.tf22t(0.94657,-1.94632,1.,-1.94632,0.94657) : fi.tf22t(0.06338,-0.83774,1.,-0.83774,0.06338);
 };
 
 blend = environment {
@@ -150,7 +154,7 @@ wobbles_mono(mode,freq,intensity,phase,sheperd_mode,sig) = sig : hilbert <: (hil
 
     f_ratio = ba.selectn(NUM_MODES_PROPERTIES,4,current_mode);
     env_depth = hslider("env_depth",0,0,20,0.01);
-    env = (transient(sig)-1)*env_depth;
+    env = (envelop.transient(1,sig)-1)*env_depth;
 
     actual_freq = freq*f_ratio+env;
     lfo = multi_lfo(actual_freq,lfo_amplitude,lfo_amplitude_offset,0,sheperd_mode);

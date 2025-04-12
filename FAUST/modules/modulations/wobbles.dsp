@@ -9,7 +9,7 @@ TODOLIST:
 
 - [x] : Remove mix parameter
 - [x] : Remove manual parameter
-- [ ] : implement internal frequency control of allpasses
+- [x] : implement internal frequency control of allpasses
 
 */
 
@@ -100,10 +100,11 @@ blend = environment {
     };
 };
 
+compute_allpass_coeficient(f) = (tan(ma.PI*f/ma.SR)-1)/(tan(ma.PI*f/ma.SR)+1);
 allpass(Q,x) = +(x'-Q*x)~(*(Q));
 allpass_section(n,Q,x) = x : seq(i,4,ba.bypass1(n<=i,allpass(Q)));
 
-wobbles_mono(mode,freq,intensity,phase,sheperd_mode,sig) = sig : hilbert <: (hilbert_path,allpass_path) : blend.power(mix) with {
+wobbles_mono(mode,freq,intensity,env_depth,phase,sheperd_mode,sig) = sig : hilbert <: (hilbert_path,allpass_path) : blend.power(mix) with {
 
     NUM_MODES = 5;
     NUM_MODES_PROPERTIES = 5;
@@ -153,23 +154,26 @@ wobbles_mono(mode,freq,intensity,phase,sheperd_mode,sig) = sig : hilbert <: (hil
     mix = ba.selectn(NUM_MODES_PROPERTIES,3,current_mode);
 
     f_ratio = ba.selectn(NUM_MODES_PROPERTIES,4,current_mode);
-    env_depth = hslider("env_depth",0,0,20,0.01);
     env = (envelop.transient(1,sig)-1)*env_depth;
 
     actual_freq = freq*f_ratio+env;
     lfo = multi_lfo(actual_freq,lfo_amplitude,lfo_amplitude_offset,0,sheperd_mode);
 
+    f = 500; //Hz
+    alpha = -compute_allpass_coeficient(f);
+
     hilbert_path(real,imag) = (real,imag) : blend.angle(lfo);
-    allpass_path(real,imag) = (real,(imag:!)) : allpass_section(num_stages,0.96);
+    allpass_path(real,imag) = (real,(imag:!)) : allpass_section(num_stages,alpha);
 
 };
 
 // process = os.lf_sawpos(freq),os.lf_sawpos(freq)*(-1) with {
-process = wobbles_mono(stages,freq,depth,0,sheperd_mode) <: _,_ with {
+process = wobbles_mono(stages,freq,depth,env_depth,0,sheperd_mode) <: _,_ with {
 
     freq = vslider("[0][scale:log]freq",1.2,0.1,100,0.01);
-    depth = vslider("[2]depth",0.5,0.,1.,0.01);
-    stages = vslider("[3]mode",2,0,4,1);
-    sheperd_mode = vslider("[4]sheperd_mode",0,-1,1,1);
+    depth = vslider("[1]depth",0.5,0.,1.,0.01);
+    stages = vslider("[2]mode",2,0,4,1);
+    env_depth = vslider("[3]env_depth",0,0,20,0.01);
+    sheperd_mode = vslider("[4]motion",0,-1,1,1);
 
 };

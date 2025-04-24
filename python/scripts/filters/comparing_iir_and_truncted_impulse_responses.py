@@ -9,7 +9,7 @@ impulse, sample_rate = sf.read('projects/bela.PAM/ressources/impulses_responses/
 
 # lambda_ = 0.15
 lambda_ = 0.75
-iir_order = 96
+iir_order = 64
 fir_order = 128
 
 def add_missing_complex_conjugate(array: np.ndarray):
@@ -32,8 +32,8 @@ def crossover(order:int, fc: float, fs: float = 48000, output: str = 'sos'):
 def iir_to_fir(order,lambda_,impulse):
     # Prony's method to approximate the impulse response
     # Adjust `a_order` and `b_order` as needed
-    a_order = order//2  # Denominator polynomial order (related to the number of biquad sections)
-    b_order = order//2 # Numerator polynomial order
+    a_order = order  # Denominator polynomial order (related to the number of biquad sections)
+    b_order = order # Numerator polynomial order
 
     h_warped = adsp.allpass_warp(lambda_,impulse)
     bwp, awp = adsp.prony(h_warped, b_order, a_order)

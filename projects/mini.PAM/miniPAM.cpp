@@ -42,6 +42,15 @@ static void interleave_buffer(float** source_buffer, float* target_buffer, int n
     }
 }
 
+static daisy::SaiHandle::Config::SampleRate sample_rate_to_enum(float sample_rate)
+{
+    if (sample_rate == 8000) return daisy::SaiHandle::Config::SampleRate::SAI_8KHZ;
+    else if (sample_rate == 16000) return daisy::SaiHandle::Config::SampleRate::SAI_16KHZ;
+    else if (sample_rate == 32000) return daisy::SaiHandle::Config::SampleRate::SAI_32KHZ;
+    else if (sample_rate == 48000) return daisy::SaiHandle::Config::SampleRate::SAI_48KHZ;
+    else if (sample_rate == 96000) return daisy::SaiHandle::Config::SampleRate::SAI_96KHZ;
+}
+
 static void AudioCallback(AudioHandle::InterleavingInputBuffer in, AudioHandle::InterleavingOutputBuffer out, size_t size)
 {
     uninterleave_buffer(in,internal_buffer,dsp_state.block_size,NUM_CHANNELS);
@@ -55,7 +64,7 @@ int main(void)
     // These are separate to allow reconfiguration of any of the internal
     // components before initialization.
     hw.SetAudioBlockSize(dsp_state.block_size);
-    hw.SetAudioSampleRate(daisy::SaiHandle::Config::SampleRate::SAI_48KHZ); // Quick but dirty
+    hw.SetAudioSampleRate(sample_rate_to_enum(dsp_state.sample_rate));
     hw.Configure();
     hw.Init();
 

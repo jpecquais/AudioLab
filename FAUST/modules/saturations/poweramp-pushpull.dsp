@@ -1,9 +1,13 @@
 import("stdfaust.lib");
-import("../../lib/filters.lib");
 
 ///////////////
 //DSP OBJECTS
 //////////////
+
+hilbert(sig) = real(sig),imag(sig) with {
+    real(x) = x : fi.tf22t(-0.260502,0.02569,1.,0.02569,-0.260502) : fi.tf22t(0.870686,-1.8685,1.,-1.8685,0.870686);
+    imag(x) = x : fi.tf22t(0.94657,-1.94632,1.,-1.94632,0.94657) : fi.tf22t(0.06338,-0.83774,1.,-0.83774,0.06338);
+};
 
 aa_tanh(x) = aa.ADAA1(EPS,f,F1,x) with {
     // Using the polynomial approx often cited (closer to atan than tanh)

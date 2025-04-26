@@ -17,7 +17,7 @@ non_linear_speaker = component("../../../faust/modules/saturations/non-linear-sp
 
 speaker = component("iir-speaker.dsp");
 
-process = *(preamp_scalling) : power_amp : pre_speaker_scaling : speaker with {
+process = *(preamp_scalling) : power_amp : pre_speaker_scaling : non_linear_speaker : speaker with {
     V_peak_daisy = 1.2; //V
     preamp_scalling = V_peak_daisy*preamp_gain;
     preamp_gain = hslider("preamp gain",0,0,40,0.01) : ba.db2linear : si.smoo;

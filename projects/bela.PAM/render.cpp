@@ -88,6 +88,7 @@ GainCallback set_output_gain = [](float new_val)
 {
 	theOutputGain.set(new_val);
 };
+static float totalOutputGain = OUTPUT_GAIN;
 
 //Define DSP Controller
 static MapUI theUI;
@@ -100,9 +101,28 @@ static CallbackParameter<float,BypassCallback> cab_bypass(set_cab_bypass_state,"
 
 //Define MIDI
 static Midi theMidi;
-static std::array<IParameter<float>*,128> ccToParameters;
+static std::array<IParameter<float>*,128> Parameters;
 static void midiCallback(MidiChannelMessage message, void *arg);
 
+//Forward declaration
+void computeOutputGain(); // <-- Callback to compute the output gain.
+						  // 	 Should optimize the CPU load in the render function
+
+/**
+ * @brief Initializes the audio processing setup.
+ *
+ * This function sets up the audio context, initializes the input section,
+ * amplifier, convolver, and rotary effect. It also sets up MIDI communication
+ * and binds parameters to MIDI CC numbers.
+ * 
+ * To limit the number of computation in the main render function, the output gain
+ * is computed inside a callback. We need to attach the callback to the parameters
+ * that have an effect on the output gain.
+ *
+ * @param context Pointer to the BelaContext containing audio settings.
+ * @param userData Pointer to user-defined data.
+ * @return true if the setup is successful, false otherwise.
+ */
 bool setup(BelaContext *context, void *userData)
 {
 	#ifdef DEBUG_AUDIO
@@ -115,12 +135,14 @@ bool setup(BelaContext *context, void *userData)
 	auto current_sample_rate = context->audioSampleRate;
 	auto current_buffer_size = context->audioFrames;
 
+	//MIDI setup
 	theMidi.readFrom(MIDI_PORT.c_str());
 	theMidi.writeTo(MIDI_PORT.c_str());
 	theMidi.enableParser(true);
 
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
+
 
 	//Bind parameters to midi CC number.
 	ccToParameters[0] = &mix;
@@ -154,6 +176,16 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
+/**
+ * @brief Processes the audio in real-time.
+ *
+ * This function handles the audio processing for each frame. It reads audio input,
+ * processes it through the input section, amplifier, convolver, and rotary effect,
+ * and writes the output to the audio buffer.
+ *
+ * @param context Pointer to the BelaContext containing audio settings.
+ * @param userData Pointer to user-defined data.
+ */
 void render(BelaContext *context, void *userData)
 {
 	bela_uninterleaved_input_buffer<float>(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
@@ -187,20 +219,45 @@ void cleanup(BelaContext *context, void *userData)
 	bypassBuffer = nullptr;
 }
 
+
+/**
+ * @brief Handles MIDI messages.
+ *
+ * This function processes MIDI messages and updates the corresponding parameters
+ * based on the MIDI CC numbers.
+ * 
+ * The CC numbers correspond to the index of the parameter in the parameters list.
+ *
+ * @param message The MIDI message received.
+ * @param arg Pointer to additional arguments (typically the MIDI port).
+ */
 void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG_CTRL
 	rt_printf("MIDI Channel: %i \n",message.getChannel());
 	#endif
 	if (message.getChannel() != BELA_MIDI_CH) return;
+	if (message.getChannel() != BELA_MIDI_CH) return;
 	if (message.getType() == kmmControlChange){
 		#ifdef DEBUG_CTRL
 		rt_printf("MIDI CC Message: %i \n",message.getDataByte(0));
 		#endif
-		auto& currParam = ccToParameters[message.getDataByte(0)];
+		auto& currParam = Parameters[message.getDataByte(0)];
 		if (currParam == nullptr) return;
 		#ifdef DEBUG_CTRL
 		rt_printf("Is a valid CC\n");
 		#endif
 		currParam->setValueFromMidi(message.getDataByte(1));
+		if (currParam->hasCallback()) currParam->invokeCallback();
 	}
+}
+
+
+/**
+ * @brief Computes the global output gain.
+ *
+ * This function calculates the global output gain based on the current values
+ * of the output gain and drive parameters.
+ */
+void computeOutputGain(){
+	totalOutputGain = OUTPUT_GAIN*outputGain.getValue()/drive.getValue();
 }

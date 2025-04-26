@@ -1,0 +1,9 @@
+/*
+@name: Mixer libraries
+@author: Jean-Loup Pecquais
+*/
+
+stereo_mixer(num_channels) = si.bus(num_channels) : par(i,N,stereo_pan(i/N)) : routing.stereo_rotate(2*N) : (sum(i,N,_),sum(i,N,_)) with {
+    N = num_channels;
+    stereo_pan(position,sig) = sig <: (*(sqrt(1-position)),*(sqrt(position)));
+};

@@ -651,78 +651,95 @@ class PamRotaryEffect : public dsp {
 	float fRec1[2];
 	float fRec0[2];
 	FAUSTFLOAT fHslider1;
+	FAUSTFLOAT fHslider2;
 	float fConst4;
 	float fConst5;
 	float fConst6;
 	float fConst7;
 	float fConst8;
-	FAUSTFLOAT fHslider2;
+	float fConst9;
+	float fConst10;
 	FAUSTFLOAT fHslider3;
 	FAUSTFLOAT fHslider4;
 	FAUSTFLOAT fHslider5;
 	FAUSTFLOAT fHslider6;
-	float fRec16[2];
-	float fConst9;
-	float fConst10;
+	FAUSTFLOAT fHslider7;
+	float fRec17[2];
 	float fConst11;
 	float fConst12;
 	float fConst13;
 	float fConst14;
-	float fRec23[2];
+	float fConst15;
+	float fConst16;
 	float fRec24[2];
-	int iRec25[2];
+	float fRec25[2];
+	int iRec26[2];
+	float fRec23[2];
 	float fRec22[2];
 	float fRec21[2];
 	float fRec20[2];
 	float fRec19[2];
 	float fRec18[2];
-	float fRec17[2];
-	float fRec15[2];
+	float fRec16[2];
 	int IOTA0;
-	float fRec26[32];
 	float fRec27[32];
+	float fRec28[32];
 	float fVec5[256];
 	float fVec6[128];
 	float fVec7[2];
-	float fRec14[2];
-	float fRec10[3];
-	float fConst15;
-	float fRec29[2];
-	float fVec8[2];
-	float fRec28[2];
+	float fRec15[2];
 	float fRec11[3];
+	float fConst17;
+	float fRec30[2];
+	float fVec8[2];
+	float fRec29[2];
+	float fRec12[3];
 	float fVec9[2];
+	float fRec10[2];
 	float fVec10[2];
 	float fRec9[2];
 	float fRec8[2];
 	float fVec11[2];
 	float fRec7[2];
 	float fRec6[2];
-	float fConst16;
-	float fConst17;
-	float fRec30[2];
 	float fVec12[2];
 	float fRec34[2];
 	float fRec33[2];
 	float fVec13[2];
 	float fRec32[2];
 	float fRec31[2];
+	float fConst18;
+	float fConst19;
 	float fRec35[2];
 	float fVec14[2];
-	float fVec15[2];
 	float fRec39[2];
 	float fRec38[2];
-	float fVec16[2];
+	float fVec15[2];
 	float fRec37[2];
 	float fRec36[2];
 	float fRec40[2];
+	float fVec16[2];
+	float fRec45[2];
 	float fVec17[2];
 	float fRec44[2];
 	float fRec43[2];
 	float fVec18[2];
 	float fRec42[2];
 	float fRec41[2];
-	float fRec45[2];
+	float fVec19[2];
+	float fRec49[2];
+	float fRec48[2];
+	float fVec20[2];
+	float fRec47[2];
+	float fRec46[2];
+	float fRec50[2];
+	float fVec21[2];
+	float fRec54[2];
+	float fRec53[2];
+	float fVec22[2];
+	float fRec52[2];
+	float fRec51[2];
+	float fRec55[2];
 	
  public:
 	PamRotaryEffect() {
@@ -817,30 +834,33 @@ class PamRotaryEffect : public dsp {
 		fConst1 = 1.0f / std::tan(3769.9111f / fConst0);
 		fConst2 = 1.0f / (fConst1 + 1.0f);
 		fConst3 = 1.0f - fConst1;
-		fConst4 = 1.0f / std::tan(14137.167f / fConst0);
-		fConst5 = 1.0f / (fConst4 + 1.0f);
-		fConst6 = 1.0f - fConst4;
-		fConst7 = 0.0002647059f * fConst0;
-		fConst8 = 1.0f / fConst0;
-		fConst9 = 1.0f / std::tan(4.712389f / fConst0);
-		fConst10 = 1.0f / (fConst9 + 1.0f);
-		fConst11 = 1.0f - fConst9;
-		fConst12 = 9.424778f / fConst0;
-		fConst13 = std::sin(fConst12);
-		fConst14 = std::cos(fConst12);
-		fConst15 = 1.2f / fConst0;
-		fConst16 = 44.1f / fConst0;
-		fConst17 = 1.0f - fConst16;
+		fConst4 = std::tan(12566.371f / fConst0);
+		fConst5 = (fConst4 + -1.0f) / (fConst4 + 1.0f);
+		fConst6 = 1.0f / std::tan(14137.167f / fConst0);
+		fConst7 = 1.0f / (fConst6 + 1.0f);
+		fConst8 = 1.0f - fConst6;
+		fConst9 = 0.0002647059f * fConst0;
+		fConst10 = 1.0f / fConst0;
+		fConst11 = 1.0f / std::tan(4.712389f / fConst0);
+		fConst12 = 1.0f / (fConst11 + 1.0f);
+		fConst13 = 1.0f - fConst11;
+		fConst14 = 9.424778f / fConst0;
+		fConst15 = std::sin(fConst14);
+		fConst16 = std::cos(fConst14);
+		fConst17 = 1.2f / fConst0;
+		fConst18 = 44.1f / fConst0;
+		fConst19 = 1.0f - fConst18;
 	}
 	
 	virtual void instanceResetUserInterface() {
 		fHslider0 = FAUSTFLOAT(5e+01f);
-		fHslider1 = FAUSTFLOAT(4e+01f);
-		fHslider2 = FAUSTFLOAT(0.0f);
+		fHslider1 = FAUSTFLOAT(5e+01f);
+		fHslider2 = FAUSTFLOAT(4e+01f);
 		fHslider3 = FAUSTFLOAT(0.0f);
-		fHslider4 = FAUSTFLOAT(0.6f);
-		fHslider5 = FAUSTFLOAT(6.0f);
-		fHslider6 = FAUSTFLOAT(3.0f);
+		fHslider4 = FAUSTFLOAT(0.0f);
+		fHslider5 = FAUSTFLOAT(0.6f);
+		fHslider6 = FAUSTFLOAT(6.0f);
+		fHslider7 = FAUSTFLOAT(3.0f);
 	}
 	
 	virtual void instanceClear() {
@@ -878,44 +898,44 @@ class PamRotaryEffect : public dsp {
 			fRec0[l10] = 0.0f;
 		}
 		for (int l11 = 0; l11 < 2; l11 = l11 + 1) {
-			fRec16[l11] = 0.0f;
+			fRec17[l11] = 0.0f;
 		}
 		for (int l12 = 0; l12 < 2; l12 = l12 + 1) {
-			fRec23[l12] = 0.0f;
+			fRec24[l12] = 0.0f;
 		}
 		for (int l13 = 0; l13 < 2; l13 = l13 + 1) {
-			fRec24[l13] = 0.0f;
+			fRec25[l13] = 0.0f;
 		}
 		for (int l14 = 0; l14 < 2; l14 = l14 + 1) {
-			iRec25[l14] = 0;
+			iRec26[l14] = 0;
 		}
 		for (int l15 = 0; l15 < 2; l15 = l15 + 1) {
-			fRec22[l15] = 0.0f;
+			fRec23[l15] = 0.0f;
 		}
 		for (int l16 = 0; l16 < 2; l16 = l16 + 1) {
-			fRec21[l16] = 0.0f;
+			fRec22[l16] = 0.0f;
 		}
 		for (int l17 = 0; l17 < 2; l17 = l17 + 1) {
-			fRec20[l17] = 0.0f;
+			fRec21[l17] = 0.0f;
 		}
 		for (int l18 = 0; l18 < 2; l18 = l18 + 1) {
-			fRec19[l18] = 0.0f;
+			fRec20[l18] = 0.0f;
 		}
 		for (int l19 = 0; l19 < 2; l19 = l19 + 1) {
-			fRec18[l19] = 0.0f;
+			fRec19[l19] = 0.0f;
 		}
 		for (int l20 = 0; l20 < 2; l20 = l20 + 1) {
-			fRec17[l20] = 0.0f;
+			fRec18[l20] = 0.0f;
 		}
 		for (int l21 = 0; l21 < 2; l21 = l21 + 1) {
-			fRec15[l21] = 0.0f;
+			fRec16[l21] = 0.0f;
 		}
 		IOTA0 = 0;
 		for (int l22 = 0; l22 < 32; l22 = l22 + 1) {
-			fRec26[l22] = 0.0f;
+			fRec27[l22] = 0.0f;
 		}
 		for (int l23 = 0; l23 < 32; l23 = l23 + 1) {
-			fRec27[l23] = 0.0f;
+			fRec28[l23] = 0.0f;
 		}
 		for (int l24 = 0; l24 < 256; l24 = l24 + 1) {
 			fVec5[l24] = 0.0f;
@@ -927,46 +947,46 @@ class PamRotaryEffect : public dsp {
 			fVec7[l26] = 0.0f;
 		}
 		for (int l27 = 0; l27 < 2; l27 = l27 + 1) {
-			fRec14[l27] = 0.0f;
+			fRec15[l27] = 0.0f;
 		}
 		for (int l28 = 0; l28 < 3; l28 = l28 + 1) {
-			fRec10[l28] = 0.0f;
+			fRec11[l28] = 0.0f;
 		}
 		for (int l29 = 0; l29 < 2; l29 = l29 + 1) {
-			fRec29[l29] = 0.0f;
+			fRec30[l29] = 0.0f;
 		}
 		for (int l30 = 0; l30 < 2; l30 = l30 + 1) {
 			fVec8[l30] = 0.0f;
 		}
 		for (int l31 = 0; l31 < 2; l31 = l31 + 1) {
-			fRec28[l31] = 0.0f;
+			fRec29[l31] = 0.0f;
 		}
 		for (int l32 = 0; l32 < 3; l32 = l32 + 1) {
-			fRec11[l32] = 0.0f;
+			fRec12[l32] = 0.0f;
 		}
 		for (int l33 = 0; l33 < 2; l33 = l33 + 1) {
 			fVec9[l33] = 0.0f;
 		}
 		for (int l34 = 0; l34 < 2; l34 = l34 + 1) {
-			fVec10[l34] = 0.0f;
+			fRec10[l34] = 0.0f;
 		}
 		for (int l35 = 0; l35 < 2; l35 = l35 + 1) {
-			fRec9[l35] = 0.0f;
+			fVec10[l35] = 0.0f;
 		}
 		for (int l36 = 0; l36 < 2; l36 = l36 + 1) {
-			fRec8[l36] = 0.0f;
+			fRec9[l36] = 0.0f;
 		}
 		for (int l37 = 0; l37 < 2; l37 = l37 + 1) {
-			fVec11[l37] = 0.0f;
+			fRec8[l37] = 0.0f;
 		}
 		for (int l38 = 0; l38 < 2; l38 = l38 + 1) {
-			fRec7[l38] = 0.0f;
+			fVec11[l38] = 0.0f;
 		}
 		for (int l39 = 0; l39 < 2; l39 = l39 + 1) {
-			fRec6[l39] = 0.0f;
+			fRec7[l39] = 0.0f;
 		}
 		for (int l40 = 0; l40 < 2; l40 = l40 + 1) {
-			fRec30[l40] = 0.0f;
+			fRec6[l40] = 0.0f;
 		}
 		for (int l41 = 0; l41 < 2; l41 = l41 + 1) {
 			fVec12[l41] = 0.0f;
@@ -993,46 +1013,88 @@ class PamRotaryEffect : public dsp {
 			fVec14[l48] = 0.0f;
 		}
 		for (int l49 = 0; l49 < 2; l49 = l49 + 1) {
-			fVec15[l49] = 0.0f;
+			fRec39[l49] = 0.0f;
 		}
 		for (int l50 = 0; l50 < 2; l50 = l50 + 1) {
-			fRec39[l50] = 0.0f;
+			fRec38[l50] = 0.0f;
 		}
 		for (int l51 = 0; l51 < 2; l51 = l51 + 1) {
-			fRec38[l51] = 0.0f;
+			fVec15[l51] = 0.0f;
 		}
 		for (int l52 = 0; l52 < 2; l52 = l52 + 1) {
-			fVec16[l52] = 0.0f;
+			fRec37[l52] = 0.0f;
 		}
 		for (int l53 = 0; l53 < 2; l53 = l53 + 1) {
-			fRec37[l53] = 0.0f;
+			fRec36[l53] = 0.0f;
 		}
 		for (int l54 = 0; l54 < 2; l54 = l54 + 1) {
-			fRec36[l54] = 0.0f;
+			fRec40[l54] = 0.0f;
 		}
 		for (int l55 = 0; l55 < 2; l55 = l55 + 1) {
-			fRec40[l55] = 0.0f;
+			fVec16[l55] = 0.0f;
 		}
 		for (int l56 = 0; l56 < 2; l56 = l56 + 1) {
-			fVec17[l56] = 0.0f;
+			fRec45[l56] = 0.0f;
 		}
 		for (int l57 = 0; l57 < 2; l57 = l57 + 1) {
-			fRec44[l57] = 0.0f;
+			fVec17[l57] = 0.0f;
 		}
 		for (int l58 = 0; l58 < 2; l58 = l58 + 1) {
-			fRec43[l58] = 0.0f;
+			fRec44[l58] = 0.0f;
 		}
 		for (int l59 = 0; l59 < 2; l59 = l59 + 1) {
-			fVec18[l59] = 0.0f;
+			fRec43[l59] = 0.0f;
 		}
 		for (int l60 = 0; l60 < 2; l60 = l60 + 1) {
-			fRec42[l60] = 0.0f;
+			fVec18[l60] = 0.0f;
 		}
 		for (int l61 = 0; l61 < 2; l61 = l61 + 1) {
-			fRec41[l61] = 0.0f;
+			fRec42[l61] = 0.0f;
 		}
 		for (int l62 = 0; l62 < 2; l62 = l62 + 1) {
-			fRec45[l62] = 0.0f;
+			fRec41[l62] = 0.0f;
+		}
+		for (int l63 = 0; l63 < 2; l63 = l63 + 1) {
+			fVec19[l63] = 0.0f;
+		}
+		for (int l64 = 0; l64 < 2; l64 = l64 + 1) {
+			fRec49[l64] = 0.0f;
+		}
+		for (int l65 = 0; l65 < 2; l65 = l65 + 1) {
+			fRec48[l65] = 0.0f;
+		}
+		for (int l66 = 0; l66 < 2; l66 = l66 + 1) {
+			fVec20[l66] = 0.0f;
+		}
+		for (int l67 = 0; l67 < 2; l67 = l67 + 1) {
+			fRec47[l67] = 0.0f;
+		}
+		for (int l68 = 0; l68 < 2; l68 = l68 + 1) {
+			fRec46[l68] = 0.0f;
+		}
+		for (int l69 = 0; l69 < 2; l69 = l69 + 1) {
+			fRec50[l69] = 0.0f;
+		}
+		for (int l70 = 0; l70 < 2; l70 = l70 + 1) {
+			fVec21[l70] = 0.0f;
+		}
+		for (int l71 = 0; l71 < 2; l71 = l71 + 1) {
+			fRec54[l71] = 0.0f;
+		}
+		for (int l72 = 0; l72 < 2; l72 = l72 + 1) {
+			fRec53[l72] = 0.0f;
+		}
+		for (int l73 = 0; l73 < 2; l73 = l73 + 1) {
+			fVec22[l73] = 0.0f;
+		}
+		for (int l74 = 0; l74 < 2; l74 = l74 + 1) {
+			fRec52[l74] = 0.0f;
+		}
+		for (int l75 = 0; l75 < 2; l75 = l75 + 1) {
+			fRec51[l75] = 0.0f;
+		}
+		for (int l76 = 0; l76 < 2; l76 = l76 + 1) {
+			fRec55[l76] = 0.0f;
 		}
 	}
 	
@@ -1057,13 +1119,14 @@ class PamRotaryEffect : public dsp {
 	
 	virtual void buildUserInterface(UI* ui_interface) {
 		ui_interface->openVerticalBox("PamRotaryEffect");
-		ui_interface->addHorizontalSlider("break", &fHslider2, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
-		ui_interface->addHorizontalSlider("fast_rotation_speed", &fHslider5, FAUSTFLOAT(6.0f), FAUSTFLOAT(4.0f), FAUSTFLOAT(1e+01f), FAUSTFLOAT(0.1f));
-		ui_interface->addHorizontalSlider("mic_distance", &fHslider1, FAUSTFLOAT(4e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
+		ui_interface->addHorizontalSlider("break", &fHslider3, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
+		ui_interface->addHorizontalSlider("fast_rotation_speed", &fHslider6, FAUSTFLOAT(6.0f), FAUSTFLOAT(4.0f), FAUSTFLOAT(1e+01f), FAUSTFLOAT(0.1f));
+		ui_interface->addHorizontalSlider("mic_distance", &fHslider2, FAUSTFLOAT(4e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
 		ui_interface->addHorizontalSlider("mix", &fHslider0, FAUSTFLOAT(5e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
-		ui_interface->addHorizontalSlider("ramp_time", &fHslider6, FAUSTFLOAT(3.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(2e+01f), FAUSTFLOAT(0.1f));
-		ui_interface->addHorizontalSlider("slow_fast", &fHslider3, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
-		ui_interface->addHorizontalSlider("slow_rotation_speed", &fHslider4, FAUSTFLOAT(0.6f), FAUSTFLOAT(0.1f), FAUSTFLOAT(4.0f), FAUSTFLOAT(0.01f));
+		ui_interface->addHorizontalSlider("ramp_time", &fHslider7, FAUSTFLOAT(3.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(2e+01f), FAUSTFLOAT(0.1f));
+		ui_interface->addHorizontalSlider("slow_fast", &fHslider4, FAUSTFLOAT(0.0f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1.0f), FAUSTFLOAT(1.0f));
+		ui_interface->addHorizontalSlider("slow_rotation_speed", &fHslider5, FAUSTFLOAT(0.6f), FAUSTFLOAT(0.1f), FAUSTFLOAT(4.0f), FAUSTFLOAT(0.01f));
+		ui_interface->addHorizontalSlider("stereo_width", &fHslider1, FAUSTFLOAT(5e+01f), FAUSTFLOAT(0.0f), FAUSTFLOAT(1e+02f), FAUSTFLOAT(0.1f));
 		ui_interface->closeBox();
 	}
 	
@@ -1073,15 +1136,18 @@ class PamRotaryEffect : public dsp {
 		FAUSTFLOAT* output1 = outputs[1];
 		float fSlow0 = 0.01f * float(fHslider0);
 		float fSlow1 = std::sqrt(1.0f - fSlow0);
-		float fSlow2 = 1.0f - 0.01f * float(fHslider1);
-		float fSlow3 = 0.5f * std::min<float>(1.0f, std::max<float>(0.0f, fSlow2));
-		float fSlow4 = 1.0f - fSlow3;
-		float fSlow5 = float(fHslider6);
-		int iSlow6 = std::fabs(fSlow5) < 1.1920929e-07f;
-		float fSlow7 = ((iSlow6) ? 0.0f : std::exp(-(fConst8 / ((iSlow6) ? 1.0f : fSlow5))));
-		float fSlow8 = (1.0f - float(fHslider2)) * ((int(float(fHslider3))) ? float(fHslider5) : float(fHslider4)) * (1.0f - fSlow7);
-		float fSlow9 = 1.4125376f * std::pow(1e+01f, 0.15f * fSlow2);
-		float fSlow10 = std::sqrt(fSlow0);
+		float fSlow2 = 0.01f * float(fHslider1);
+		float fSlow3 = std::sqrt(1.0f - fSlow2);
+		float fSlow4 = 1.0f - 0.01f * float(fHslider2);
+		float fSlow5 = 0.5f * std::min<float>(1.0f, std::max<float>(0.0f, fSlow4));
+		float fSlow6 = 1.0f - fSlow5;
+		float fSlow7 = float(fHslider7);
+		int iSlow8 = std::fabs(fSlow7) < 1.1920929e-07f;
+		float fSlow9 = ((iSlow8) ? 0.0f : std::exp(-(fConst10 / ((iSlow8) ? 1.0f : fSlow7))));
+		float fSlow10 = (1.0f - float(fHslider3)) * ((int(float(fHslider4))) ? float(fHslider6) : float(fHslider5)) * (1.0f - fSlow9);
+		float fSlow11 = 1.4125376f * std::pow(1e+01f, 0.15f * fSlow4);
+		float fSlow12 = std::sqrt(fSlow0);
+		float fSlow13 = std::sqrt(fSlow2);
 		for (int i0 = 0; i0 < count; i0 = i0 + 1) {
 			iVec0[0] = 1;
 			float fTemp0 = float(input0[i0]);
@@ -1097,92 +1163,108 @@ class PamRotaryEffect : public dsp {
 			fRec1[0] = 1.8685f * (fRec1[1] - fRec2[1]) + fVec4[1] + 0.870686f * fRec2[0];
 			fRec0[0] = fRec1[0];
 			int iTemp2 = 1 - iVec0[1];
-			fRec16[0] = fSlow8 + fSlow7 * fRec16[1];
-			fRec23[0] = fConst13 * fRec24[1] + fConst14 * fRec23[1];
-			fRec24[0] = float(iTemp2) + fConst14 * fRec24[1] - fConst13 * fRec23[1];
-			int iTemp3 = (fRec23[1] <= 0.0f) & (fRec23[0] > 0.0f);
-			iRec25[0] = 1103515245 * iRec25[1] + 12345;
-			fRec22[0] = fRec22[1] * float(1 - iTemp3) + 4.656613e-10f * float(iRec25[0]) * float(iTemp3);
-			fRec21[0] = -(fConst10 * (fConst11 * fRec21[1] - (fRec22[0] + fRec22[1])));
-			fRec20[0] = -(fConst10 * (fConst11 * fRec20[1] - (fRec21[0] + fRec21[1])));
-			fRec19[0] = -(fConst10 * (fConst11 * fRec19[1] - (fRec20[0] + fRec20[1])));
-			fRec18[0] = -(fConst10 * (fConst11 * fRec18[1] - (fRec19[0] + fRec19[1])));
-			fRec17[0] = -(fConst10 * (fConst11 * fRec17[1] - (fRec18[0] + fRec18[1])));
-			float fTemp4 = 0.125f * fRec17[0] + 1.0f;
-			float fTemp5 = fRec16[0] * fTemp4;
-			float fTemp6 = ((iTemp2) ? 1.5707964f : fRec15[1] - fConst8 * fTemp5);
-			fRec15[0] = fTemp6 - std::floor(fTemp6);
-			float fTemp7 = std::cos(6.2831855f * fRec15[0] + -3.1415927f);
-			float fTemp8 = fConst7 * (fTemp7 + 1.0f);
+			fRec17[0] = fSlow10 + fSlow9 * fRec17[1];
+			fRec24[0] = fConst15 * fRec25[1] + fConst16 * fRec24[1];
+			fRec25[0] = float(iTemp2) + fConst16 * fRec25[1] - fConst15 * fRec24[1];
+			int iTemp3 = (fRec24[1] <= 0.0f) & (fRec24[0] > 0.0f);
+			iRec26[0] = 1103515245 * iRec26[1] + 12345;
+			fRec23[0] = fRec23[1] * float(1 - iTemp3) + 4.656613e-10f * float(iRec26[0]) * float(iTemp3);
+			fRec22[0] = -(fConst12 * (fConst13 * fRec22[1] - (fRec23[0] + fRec23[1])));
+			fRec21[0] = -(fConst12 * (fConst13 * fRec21[1] - (fRec22[0] + fRec22[1])));
+			fRec20[0] = -(fConst12 * (fConst13 * fRec20[1] - (fRec21[0] + fRec21[1])));
+			fRec19[0] = -(fConst12 * (fConst13 * fRec19[1] - (fRec20[0] + fRec20[1])));
+			fRec18[0] = -(fConst12 * (fConst13 * fRec18[1] - (fRec19[0] + fRec19[1])));
+			float fTemp4 = 0.125f * fRec18[0] + 1.0f;
+			float fTemp5 = fRec17[0] * fTemp4;
+			float fTemp6 = ((iTemp2) ? 1.5707964f : fRec16[1] - fConst10 * fTemp5);
+			fRec16[0] = fTemp6 - std::floor(fTemp6);
+			float fTemp7 = std::cos(6.2831855f * fRec16[0] + -3.1415927f);
+			float fTemp8 = fConst9 * (fTemp7 + 1.0f);
 			float fTemp9 = fTemp8 + 5e-06f;
 			float fTemp10 = std::floor(fTemp9);
-			fRec26[IOTA0 & 31] = -(fConst5 * (fConst6 * fRec26[(IOTA0 - 1) & 31] + 0.16666667f * (fRec11[1] + fRec11[2])));
-			fRec27[IOTA0 & 31] = -(fConst5 * (fConst6 * fRec27[(IOTA0 - 1) & 31] + 0.16666667f * (fRec10[1] + fRec10[2])));
+			fRec27[IOTA0 & 31] = -(fConst7 * (fConst8 * fRec27[(IOTA0 - 1) & 31] + 0.16666667f * (fRec12[1] + fRec12[2])));
+			fRec28[IOTA0 & 31] = -(fConst7 * (fConst8 * fRec28[(IOTA0 - 1) & 31] + 0.16666667f * (fRec11[1] + fRec11[2])));
 			float fTemp11 = 48.0f * fTemp4;
 			float fTemp12 = fTemp11 + 5e-06f;
 			float fTemp13 = std::floor(fTemp12);
-			float fTemp14 = fSlow10 * fRec5[0];
+			float fTemp14 = fSlow12 * fRec5[0];
 			fVec5[IOTA0 & 255] = fTemp14;
 			int iTemp15 = int(fTemp12);
-			float fTemp16 = 0.5f * (fRec26[(IOTA0 - 31) & 31] + fRec26[(IOTA0 - 17) & 31] + fRec27[(IOTA0 - 23) & 31] + fRec27[(IOTA0 - 11) & 31] + fRec27[IOTA0 & 31] + fRec26[IOTA0 & 31]) + fSlow9 * ((fTemp11 - fTemp13) * fVec5[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp15 + 1))) & 255] - fVec5[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp15))) & 255] * (fTemp11 + (-1.0f - fTemp13)));
+			float fTemp16 = 0.5f * (fRec27[(IOTA0 - 31) & 31] + fRec27[(IOTA0 - 17) & 31] + fRec28[(IOTA0 - 23) & 31] + fRec28[(IOTA0 - 11) & 31] + fRec28[IOTA0 & 31] + fRec27[IOTA0 & 31]) + fSlow11 * ((fTemp11 - fTemp13) * fVec5[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp15 + 1))) & 255] - fVec5[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp15))) & 255] * (fTemp11 + (-1.0f - fTemp13)));
 			fVec6[IOTA0 & 127] = fTemp16;
 			int iTemp17 = int(fTemp9);
 			float fTemp18 = (fTemp8 - fTemp10) * fVec6[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp17 + 1))) & 127] - fVec6[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp17))) & 127] * (fTemp8 + (-1.0f - fTemp10));
 			fVec7[0] = fTemp18;
-			fRec14[0] = -(fConst5 * (fConst6 * fRec14[1] - (fTemp18 + fVec7[1])));
-			fRec10[0] = fRec14[0];
-			float fTemp19 = ((iTemp2) ? 1.5707964f : fRec29[1] - fConst15 * fTemp5);
-			fRec29[0] = fTemp19 - std::floor(fTemp19);
-			float fTemp20 = std::cos(6.2831855f * fRec29[0] + -3.1415927f);
-			float fTemp21 = fConst7 * (fTemp20 + 1.0f);
+			fRec15[0] = -(fConst7 * (fConst8 * fRec15[1] - (fTemp18 + fVec7[1])));
+			fRec11[0] = fRec15[0];
+			float fTemp19 = ((iTemp2) ? 1.5707964f : fRec30[1] - fConst17 * fTemp5);
+			fRec30[0] = fTemp19 - std::floor(fTemp19);
+			float fTemp20 = std::cos(6.2831855f * fRec30[0] + -3.1415927f);
+			float fTemp21 = fConst9 * (fTemp20 + 1.0f);
 			float fTemp22 = fTemp21 + 7.000005f;
 			float fTemp23 = std::floor(fTemp22);
 			int iTemp24 = int(fTemp22);
 			float fTemp25 = (fTemp21 + (7.0f - fTemp23)) * fVec6[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp24 + 1))) & 127] - fVec6[(IOTA0 - std::min<int>(192, std::max<int>(0, iTemp24))) & 127] * (fTemp21 + (6.0f - fTemp23));
 			fVec8[0] = fTemp25;
-			fRec28[0] = -(fConst5 * (fConst6 * fRec28[1] - (fTemp25 + fVec8[1])));
-			fRec11[0] = fRec28[0];
-			float fRec12 = 0.5f * (fTemp16 + fVec6[(IOTA0 - 11) & 127] + fVec6[(IOTA0 - 23) & 127]);
-			float fRec13 = 0.5f * (fTemp16 + fVec6[(IOTA0 - 17) & 127] + fVec6[(IOTA0 - 31) & 127]);
+			fRec29[0] = -(fConst7 * (fConst8 * fRec29[1] - (fTemp25 + fVec8[1])));
+			fRec12[0] = fRec29[0];
+			float fRec13 = 0.5f * (fTemp16 + fVec6[(IOTA0 - 11) & 127] + fVec6[(IOTA0 - 23) & 127]);
+			float fRec14 = 0.5f * (fTemp16 + fVec6[(IOTA0 - 17) & 127] + fVec6[(IOTA0 - 31) & 127]);
 			float fTemp26 = fRec11[0] + fRec13;
 			fVec9[0] = fTemp26;
-			float fTemp27 = 0.70710677f * fVec9[1];
-			fVec10[0] = 0.260502f * fRec8[1] + fTemp27;
-			fRec9[0] = fVec10[1] + 0.018165573f * fVec9[1] - (0.02569f * fRec9[1] + 0.18420273f * fTemp26);
+			fRec10[0] = fConst5 * fRec10[1] + 0.70710677f * (fVec9[1] - fConst5 * fTemp26);
+			fVec10[0] = 0.260502f * fRec8[1] - fRec10[1];
+			fRec9[0] = fVec10[1] + 0.260502f * fRec10[0] - 0.02569f * (fRec9[1] + fRec10[1]);
 			fRec8[0] = fRec9[0];
 			fVec11[0] = fRec8[1] - 0.870686f * fRec6[1];
 			fRec7[0] = 1.8685f * (fRec7[1] - fRec8[1]) + fVec11[1] + 0.870686f * fRec8[0];
 			fRec6[0] = fRec7[0];
-			float fTemp28 = 3.1415927f * fTemp20;
-			fRec30[0] = fConst16 * std::cos(fTemp28) + fConst17 * fRec30[1];
-			fVec12[0] = fTemp27 - 0.94657f * fRec33[1];
-			fRec34[0] = fVec12[1] + 1.94632f * fRec34[1] + 0.66932607f * fTemp26 - 1.3762561f * fVec9[1];
+			float fTemp27 = 0.70710677f * fVec9[1];
+			fVec12[0] = fTemp27 + 0.260502f * fRec33[1];
+			fRec34[0] = fVec12[1] + 0.018165573f * fVec9[1] - (0.02569f * fRec34[1] + 0.18420273f * fTemp26);
 			fRec33[0] = fRec34[0];
-			fVec13[0] = fRec33[1] - 0.06338f * fRec31[1];
-			fRec32[0] = 0.83774f * (fRec32[1] - fRec33[1]) + fVec13[1] + 0.06338f * fRec33[0];
+			fVec13[0] = fRec33[1] - 0.870686f * fRec31[1];
+			fRec32[0] = 1.8685f * (fRec32[1] - fRec33[1]) + fVec13[1] + 0.870686f * fRec33[0];
 			fRec31[0] = fRec32[0];
-			fRec35[0] = fConst16 * std::sin(fTemp28) + fConst17 * fRec35[1];
-			float fTemp29 = 0.70710677f * (fSlow4 * fRec6[0] + fSlow3 * (fRec6[0] * fRec30[0] + fRec31[0] * fRec35[0]));
-			output0[i0] = FAUSTFLOAT(fRec0[0] + fTemp29);
-			float fTemp30 = fRec10[0] + fRec12;
-			fVec14[0] = fTemp30;
-			float fTemp31 = 0.70710677f * fVec14[1];
-			fVec15[0] = 0.260502f * fRec38[1] + fTemp31;
-			fRec39[0] = fVec15[1] + 0.018165573f * fVec14[1] - (0.02569f * fRec39[1] + 0.18420273f * fTemp30);
+			float fTemp28 = 3.1415927f * fTemp7;
+			fRec35[0] = fConst18 * std::cos(fTemp28) + fConst19 * fRec35[1];
+			fVec14[0] = fTemp27 - 0.94657f * fRec38[1];
+			fRec39[0] = fVec14[1] + 1.94632f * fRec39[1] + 0.66932607f * fTemp26 - 1.3762561f * fVec9[1];
 			fRec38[0] = fRec39[0];
-			fVec16[0] = fRec38[1] - 0.870686f * fRec36[1];
-			fRec37[0] = 1.8685f * (fRec37[1] - fRec38[1]) + fVec16[1] + 0.870686f * fRec38[0];
+			fVec15[0] = fRec38[1] - 0.06338f * fRec36[1];
+			fRec37[0] = 0.83774f * (fRec37[1] - fRec38[1]) + fVec15[1] + 0.06338f * fRec38[0];
 			fRec36[0] = fRec37[0];
-			float fTemp32 = 3.1415927f * fTemp7;
-			fRec40[0] = fConst16 * std::cos(fTemp32) + fConst17 * fRec40[1];
-			fVec17[0] = fTemp31 - 0.94657f * fRec43[1];
-			fRec44[0] = fVec17[1] + 1.94632f * fRec44[1] + 0.66932607f * fTemp30 - 1.3762561f * fVec14[1];
+			fRec40[0] = fConst18 * std::sin(fTemp28) + fConst19 * fRec40[1];
+			float fTemp29 = fSlow6 * fRec6[0] + fSlow5 * (fRec31[0] * fRec35[0] + fRec36[0] * fRec40[0]);
+			float fTemp30 = fRec12[0] + fRec14;
+			fVec16[0] = fTemp30;
+			fRec45[0] = fConst5 * fRec45[1] + 0.70710677f * (fVec16[1] - fConst5 * fTemp30);
+			fVec17[0] = 0.260502f * fRec43[1] - fRec45[1];
+			fRec44[0] = fVec17[1] + 0.260502f * fRec45[0] - 0.02569f * (fRec44[1] + fRec45[1]);
 			fRec43[0] = fRec44[0];
-			fVec18[0] = fRec43[1] - 0.06338f * fRec41[1];
-			fRec42[0] = 0.83774f * (fRec42[1] - fRec43[1]) + fVec18[1] + 0.06338f * fRec43[0];
+			fVec18[0] = fRec43[1] - 0.870686f * fRec41[1];
+			fRec42[0] = 1.8685f * (fRec42[1] - fRec43[1]) + fVec18[1] + 0.870686f * fRec43[0];
 			fRec41[0] = fRec42[0];
-			fRec45[0] = fConst16 * std::sin(fTemp32) + fConst17 * fRec45[1];
-			output1[i0] = FAUSTFLOAT(fTemp29 + fSlow3 * (fRec36[0] * fRec40[0] + fRec41[0] * fRec45[0]) + fRec0[0] + fSlow4 * fRec36[0]);
+			float fTemp31 = 0.70710677f * fVec16[1];
+			fVec19[0] = fTemp31 + 0.260502f * fRec48[1];
+			fRec49[0] = fVec19[1] + 0.018165573f * fVec16[1] - (0.02569f * fRec49[1] + 0.18420273f * fTemp30);
+			fRec48[0] = fRec49[0];
+			fVec20[0] = fRec48[1] - 0.870686f * fRec46[1];
+			fRec47[0] = 1.8685f * (fRec47[1] - fRec48[1]) + fVec20[1] + 0.870686f * fRec48[0];
+			fRec46[0] = fRec47[0];
+			float fTemp32 = 3.1415927f * fTemp20;
+			fRec50[0] = fConst18 * std::cos(fTemp32) + fConst19 * fRec50[1];
+			fVec21[0] = fTemp31 - 0.94657f * fRec53[1];
+			fRec54[0] = fVec21[1] + 1.94632f * fRec54[1] + 0.66932607f * fTemp30 - 1.3762561f * fVec16[1];
+			fRec53[0] = fRec54[0];
+			fVec22[0] = fRec53[1] - 0.06338f * fRec51[1];
+			fRec52[0] = 0.83774f * (fRec52[1] - fRec53[1]) + fVec22[1] + 0.06338f * fRec53[0];
+			fRec51[0] = fRec52[0];
+			fRec55[0] = fConst18 * std::sin(fTemp32) + fConst19 * fRec55[1];
+			float fTemp33 = fRec0[0] + fSlow3 * (fTemp29 + 1.4142135f * (fSlow6 * fRec41[0] + fSlow5 * (fRec46[0] * fRec50[0] + fRec51[0] * fRec55[0])));
+			float fTemp34 = fSlow13 * fTemp29;
+			output0[i0] = FAUSTFLOAT(fTemp33 - fTemp34);
+			output1[i0] = FAUSTFLOAT(fTemp34 + fTemp33);
 			iVec0[1] = iVec0[0];
 			fVec1[1] = fVec1[0];
 			fRec4[1] = fRec4[0];
@@ -1194,35 +1276,35 @@ class PamRotaryEffect : public dsp {
 			fVec4[1] = fVec4[0];
 			fRec1[1] = fRec1[0];
 			fRec0[1] = fRec0[0];
-			fRec16[1] = fRec16[0];
-			fRec23[1] = fRec23[0];
+			fRec17[1] = fRec17[0];
 			fRec24[1] = fRec24[0];
-			iRec25[1] = iRec25[0];
+			fRec25[1] = fRec25[0];
+			iRec26[1] = iRec26[0];
+			fRec23[1] = fRec23[0];
 			fRec22[1] = fRec22[0];
 			fRec21[1] = fRec21[0];
 			fRec20[1] = fRec20[0];
 			fRec19[1] = fRec19[0];
 			fRec18[1] = fRec18[0];
-			fRec17[1] = fRec17[0];
-			fRec15[1] = fRec15[0];
+			fRec16[1] = fRec16[0];
 			IOTA0 = IOTA0 + 1;
 			fVec7[1] = fVec7[0];
-			fRec14[1] = fRec14[0];
-			fRec10[2] = fRec10[1];
-			fRec10[1] = fRec10[0];
-			fRec29[1] = fRec29[0];
-			fVec8[1] = fVec8[0];
-			fRec28[1] = fRec28[0];
+			fRec15[1] = fRec15[0];
 			fRec11[2] = fRec11[1];
 			fRec11[1] = fRec11[0];
+			fRec30[1] = fRec30[0];
+			fVec8[1] = fVec8[0];
+			fRec29[1] = fRec29[0];
+			fRec12[2] = fRec12[1];
+			fRec12[1] = fRec12[0];
 			fVec9[1] = fVec9[0];
+			fRec10[1] = fRec10[0];
 			fVec10[1] = fVec10[0];
 			fRec9[1] = fRec9[0];
 			fRec8[1] = fRec8[0];
 			fVec11[1] = fVec11[0];
 			fRec7[1] = fRec7[0];
 			fRec6[1] = fRec6[0];
-			fRec30[1] = fRec30[0];
 			fVec12[1] = fVec12[0];
 			fRec34[1] = fRec34[0];
 			fRec33[1] = fRec33[0];
@@ -1231,20 +1313,34 @@ class PamRotaryEffect : public dsp {
 			fRec31[1] = fRec31[0];
 			fRec35[1] = fRec35[0];
 			fVec14[1] = fVec14[0];
-			fVec15[1] = fVec15[0];
 			fRec39[1] = fRec39[0];
 			fRec38[1] = fRec38[0];
-			fVec16[1] = fVec16[0];
+			fVec15[1] = fVec15[0];
 			fRec37[1] = fRec37[0];
 			fRec36[1] = fRec36[0];
 			fRec40[1] = fRec40[0];
+			fVec16[1] = fVec16[0];
+			fRec45[1] = fRec45[0];
 			fVec17[1] = fVec17[0];
 			fRec44[1] = fRec44[0];
 			fRec43[1] = fRec43[0];
 			fVec18[1] = fVec18[0];
 			fRec42[1] = fRec42[0];
 			fRec41[1] = fRec41[0];
-			fRec45[1] = fRec45[0];
+			fVec19[1] = fVec19[0];
+			fRec49[1] = fRec49[0];
+			fRec48[1] = fRec48[0];
+			fVec20[1] = fVec20[0];
+			fRec47[1] = fRec47[0];
+			fRec46[1] = fRec46[0];
+			fRec50[1] = fRec50[0];
+			fVec21[1] = fVec21[0];
+			fRec54[1] = fRec54[0];
+			fRec53[1] = fRec53[0];
+			fVec22[1] = fVec22[0];
+			fRec52[1] = fRec52[0];
+			fRec51[1] = fRec51[0];
+			fRec55[1] = fRec55[0];
 		}
 	}
 

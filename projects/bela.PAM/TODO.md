@@ -1,10 +1,11 @@
 # Bela.PAM Project management
 
-## Backlogs:
+## 📥 Backlogs:
 
 - [ ] - Create an AudioBuffer class.
+- [ ] - FIXME: Default value of parameters are not applyied to FAUSTParameters.
 
-## Working on:
+## 🧠 Working on:
 
 - [ ] - Implement bypass for amp and cab sim
   - Work as a bypass -> meaning it does not disable the process computation. We want constant workload.
@@ -16,7 +17,7 @@
   - At this point Prony and FDLS have been roughly tested, without clear improvement over trunc impulse response. FDLS tests may have bugs. 
   - should investigate FFT based convolution algorithm
 
-## Done:
+## 💪 Done:
 
 - [x] - Bump frequency response of rotary sound to 4500 Hz.
 - [x] - FAUSTParameter do not respond to MIDI CC messages.
@@ -35,3 +36,5 @@
 - [x] - Python script for pushing code to Bela
   - [x] - Push cpp audiolab librarie to `root@bela.local/Bela/libraries/audiolab`
   - [x] - Create mecanism to update project code.
+
+## 🤯 Stuck:

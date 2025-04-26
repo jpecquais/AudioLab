@@ -38,6 +38,8 @@ public:
 protected:
     std::string m_name;
     T m_value, m_min, m_max, m_default;
+    bool m_hasCallback;
+    std::function<void()> m_callback;
 };
 
 template <class T>

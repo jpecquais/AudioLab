@@ -1,0 +1,7 @@
+/*
+@name: Matrixing libraries
+@author: Jean-Loup Pecquais
+*/
+
+str2ms(left,right) = left+right,left-right : par(i,2,*(sqrt(0.5)));
+ms2str(mid,side) = str2ms(mid,side);

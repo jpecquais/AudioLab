@@ -14,4 +14,14 @@ lfo : A time varying signal is expected here, varying between -1 and 1. Greater 
 blend : 0 is 100% dry. 1 is 100% vibrato effect. Intermediate values creates amplitude modulation effect.
 sig: signal to be processed
 */
-hilbert_modulator(lfo,blend,sig) = sig <: ((hilbert : (*(1-blend),!)),phase_rotator(lfo*ma.PI)*(blend)) : + ;
+hilbert_modulator_dry_path(lfo,blend,dry_path,sig) = sig <: ((dry_path : hilbert : (*(1-blend),!)),phase_rotator(lfo*ma.PI)*(blend)) : + ;
+hilbert_modulator(lfo,blend,sig) = hilbert_modulator_dry_path(lfo,blend,_,sig);
+
+
+
+stereo_width(width,left,right) = (left,right) : str2ms : (*(sqrt((1-_width))),(*(sqrt(_width)))) : ms2str with {
+    str2ms(left,right) = left+right,left-right;
+    ms2str(mid,side) = str2ms(mid,side);
+
+    _width = width/100;
+};

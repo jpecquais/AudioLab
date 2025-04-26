@@ -56,7 +56,7 @@ axs[1][0].semilogx(w,20*np.log10(abs(tf2)))
 axs[1][1].semilogx(w,np.angle(tf2,deg=True))
 axs[2][0].semilogx(w,20*np.log10(abs(tf)))
 axs[2][1].semilogx(w,diff_phi)
-axs[2][1].set_ylim(85,95)
+axs[2][1].set_ylim(0,180)
 # axs[all][all].set_ylim(6,-40)
 for ax in axs:
     ax[0].set_ylim(-40,6)

@@ -1,3 +1,21 @@
+# Optimized Velvet-Noise Decorrelator algorithm from the paper "Optimized Velvet-Noise Decorrelator" (Schlecht et al., DAFx-18).
+
+# Here's a Python implementation covering the core aspects:
+
+# Generation of initial Exponential Velvet Noise (EVN)
+
+# Calculation of magnitude response and objective function (RMSE of smoothed dB magnitude)
+
+# Optimization of impulse gains (γ) and locations (τ̃)
+
+# Rounding continuous locations τ̃ to integer locations τ
+
+# Efficient sparse convolution
+
+# (Optional but included) Coherence calculation and pair selection
+
+# We'll use numpy for numerical operations and scipy.optimize for the optimization part. scipy.signal will be used for comparisons and potentially for filtering in the coherence calculation.
+
 import numpy as np
 import scipy.optimize
 import scipy.signal
@@ -6,11 +24,11 @@ from typing import Tuple, List, Optional
 
 # --- Constants and Helper Functions ---
 
-def _calculate_alpha(L_dB: float, Ls: int) -> float:
+def _calculate_alpha(target_level_db: float, decay_time: int) -> float:
     """Calculates the exponential decay factor alpha (Eq. 6)."""
     # Target decay L_dB is negative, e.g., -60
-    if Ls <= 1: return 0.0
-    return -np.log(10**(L_dB / 20.0)) / (Ls - 1) # Decay over Ls-1 samples
+    if decay_time <= 1: return 0.0
+    return -np.log(10**(target_level_db / 20.0)) / (decay_time - 1) # Decay over Ls-1 samples
 
 def _calculate_target_gain(tau_m: float, alpha: float) -> float:
     """Calculates the target exponential gain for a given delay."""
@@ -95,130 +113,7 @@ def third_octave_smoothing(
     mean_smoothed_response = np.mean(smoothed_db_response)
     return smoothed_db_response, mean_smoothed_response
 
-# --- Core VNS Generation and Optimization ---
-
-def generate_evn(
-    duration_sec: float,
-    density_Nd: float,
-    fs: int,
-    decay_L_dB: float = -60.0
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, float]:
-    """
-    Generates an Exponential Velvet Noise (EVN) sequence (Eq. 1-6).
-
-    Args:
-        duration_sec: Filter duration in seconds.
-        density_Nd: Impulse density (impulses per second).
-        fs: Sampling rate.
-        decay_L_dB: Total decay in dB (e.g., -60).
-
-    Returns:
-        tau_int: Integer impulse locations (indices).
-        sigma: Impulse signs (-1 or 1).
-        gamma: Exponential impulse gains (positive).
-        Ls: Total filter length in samples.
-        Ta: Grid size in samples.
-    """
-    Ls = int(np.ceil(duration_sec * fs))
-    Ta = fs / density_Nd  # Average spacing (grid size)
-    M = int(np.floor(duration_sec * density_Nd)) # Total number of impulses (Eq. 2 approx)
-    if M == 0:
-      print("Warning: Zero impulses requested. Check duration and density.")
-      return np.array([0]), np.array([1.0]), np.array([1.0]), Ls, Ta
-
-    # --- Generate Impulse Times (Eq. 4) ---
-    tau_int = np.zeros(M, dtype=int)
-    # r2 ~ Uniform(0, 1] - use -np.random.rand() for (0, 1) then adjust if needed
-    r2 = 1.0 - np.random.rand(M - 1) # Ensures r2 > 0
-    # Calculate non-zero impulse times
-    # Add 1e-9 to avoid log(0) issues if Ta or m is zero, though m starts at 1 here.
-    tau_int[1:] = np.ceil(Ta * (np.arange(M - 1) + r2)).astype(int)
-
-    # Ensure times are within bounds and unique - ceiling might exceed Ls
-    tau_int = np.minimum(tau_int, Ls - 1)
-    tau_int = np.unique(tau_int) # Keep only unique locations
-    M = len(tau_int) # Update M based on unique locations
-
-    # --- Generate Signs (Eq. 3) ---
-    r1 = np.random.rand(M)
-    sigma = (2 * np.round(r1) - 1).astype(float)
-    # Ensure first impulse is non-zero sign if desired (paper normalizes first gain later)
-    if sigma[0] == 0: sigma[0] = 1.0
-
-    # --- Generate Exponential Gains (Eq. 5, 6) ---
-    alpha = _calculate_alpha(decay_L_dB, Ls)
-    gamma = _calculate_target_gain(tau_int.astype(float), alpha)
-
-    return tau_int, sigma, gamma, Ls, Ta
-
-
-def optimize_vns(
-    tau_init: np.ndarray,
-    sigma: np.ndarray,
-    gamma_init: np.ndarray,
-    Ls: int,
-    Ta: float,
-    fs: int,
-    decay_L_dB: float = -60.0,
-    gain_deviation_factor: float = 2.0, # Corresponds to +/- 6dB (chi=2)
-    freq_min: float = 20.0,
-    freq_max: float = 20000.0,
-    num_freq_points: int = 200,
-    optimizer_options: Optional[dict] = None
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Optimizes VNS impulse locations (tau) and gains (gamma) for flatness.
-
-    Args:
-        tau_init: Initial integer impulse locations.
-        sigma: Impulse signs (fixed during optimization).
-        gamma_init: Initial impulse gains.
-        Ls: Total filter length in samples.
-        Ta: Grid size (for constraints).
-        fs: Sampling rate.
-        decay_L_dB: Target decay for gain constraints.
-        gain_deviation_factor: Allowed gain multiplier/divisor (chi).
-        freq_min: Minimum frequency for evaluation.
-        freq_max: Maximum frequency for evaluation (<= fs/2).
-        num_freq_points: Number of log-spaced points for evaluation.
-        optimizer_options: Dictionary of options for scipy.optimize.minimize.
-
-    Returns:
-        tau_opt_int: Optimized integer impulse locations.
-        gamma_opt: Optimized impulse gains.
-    """
-    M = len(tau_init)
-    if M <= 1:
-        print("Warning: Cannot optimize sequence with <= 1 impulse.")
-        return tau_init, gamma_init
-
-    freq_max = min(freq_max, fs / 2.0 - 1e-6) # Ensure below Nyquist
-    # Logarithmically spaced frequencies for evaluation (Eq. 11)
-    log_freqs = np.geomspace(freq_min, freq_max, num_freq_points)
-
-    alpha = _calculate_alpha(decay_L_dB, Ls)
-
-    # Optimization variables: Combine continuous tau and gamma
-    # Exclude tau[0]=0 and gamma[0]=1 (fixed normalization)
-    tau_cont_init = tau_init[1:].astype(float)
-    gamma_mult_init = np.ones(M-1) # Multiplier relative to target gain
-
-    # Initial packed variables [tau_cont[1:], ..., tau_cont[M-1], gamma_mult[1:], ..., gamma_mult[M-1]]
-    x0 = np.concatenate((tau_cont_init, gamma_mult_init))
-
-    # Fixed parameters to pass to objective function
-    fixed_params = {
-        "sigma": sigma,
-        "alpha": alpha,
-        "log_freqs": log_freqs,
-        "fs": fs,
-        "M": M,
-        "gain_deviation_factor": gain_deviation_factor,
-        "tau0": tau_init[0], # Should be 0
-        "gamma0_target": gamma_init[0] # Should be 1.0 or close
-    }
-
-    def objective_function(x: np.ndarray, params: dict) -> float:
+def objective_function(x: np.ndarray, params: dict) -> float:
         """Calculates RMSE of smoothed dB magnitude response (Eq. 15)."""
         M = params["M"]
         mid = M - 1 # Index separating taus and gammas in x
@@ -248,23 +143,148 @@ def optimize_vns(
         rmse = np.sqrt(np.mean((smoothed_db - mean_smoothed)**2))
         return rmse
 
+# --- Core VNS Generation and Optimization ---
+
+def generate_evn(
+    duration_sec: float,
+    density_Nd: float,
+    fs: int,
+    decay_L_dB: float = -60.0
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, float]:
+    """
+    Generates an Exponential Velvet Noise (EVN) sequence (Eq. 1-6).
+
+    Args:
+        duration_sec: Filter duration in seconds.
+        density_Nd: Impulse density (impulses per second).
+        fs: Sampling rate.
+        decay_L_dB: Total decay in dB (e.g., -60).
+
+    Returns:
+        tau_int: Integer impulse locations (indices).
+        sigma: Impulse signs (-1 or 1).
+        gamma: Exponential impulse gains (positive).
+        Ls: Total filter length in samples.
+        Ta: Grid size in samples.
+    """
+    noise_len_samples = int(np.ceil(duration_sec * fs))
+    average_spacing = fs / density_Nd  # Average spacing (grid size)
+    num_of_impulses = int(np.floor(duration_sec * density_Nd)) # Total number of impulses (Eq. 2 approx)
+    if num_of_impulses == 0:
+      print("Warning: Zero impulses requested. Check duration and density.")
+      return np.array([0]), np.array([1.0]), np.array([1.0]), noise_len_samples, average_spacing
+
+    # --- Generate Impulse Times (Eq. 4) ---
+    impulses_position = np.zeros(num_of_impulses, dtype=int) # impulse_position is defined in samples.
+    # r2 ~ Uniform(0, 1] - use -np.random.rand() for (0, 1) then adjust if needed
+    r2 = 1.0 - np.random.rand(num_of_impulses - 1) # Ensures r2 > 0
+    # Calculate non-zero impulse times
+    # Add 1e-9 to avoid log(0) issues if Ta or m is zero, though m starts at 1 here.
+    impulses_position[1:] = np.ceil(average_spacing * (np.arange(num_of_impulses - 1) + r2)).astype(int)
+
+    # Ensure times are within bounds and unique - ceiling might exceed Ls
+    impulses_position = np.minimum(impulses_position, noise_len_samples - 1)
+    impulses_position = np.unique(impulses_position) # Keep only unique locations
+    num_of_impulses = len(impulses_position) # Update M based on unique locations
+
+    # --- Generate Signs (Eq. 3) ---
+    r1 = np.random.rand(num_of_impulses)
+    impulses_sign = (2 * np.round(r1) - 1).astype(float)
+    # Ensure first impulse is non-zero sign if desired (paper normalizes first gain later)
+    if impulses_sign[0] == 0: impulses_sign[0] = 1.0
+
+    # --- Generate Exponential Gains (Eq. 5, 6) ---
+    alpha = _calculate_alpha(decay_L_dB, noise_len_samples)
+    impulses_gain = _calculate_target_gain(impulses_position.astype(float), alpha)
+
+    return impulses_position, impulses_sign, impulses_gain, noise_len_samples, average_spacing
+
+
+def optimize_vns(
+    init_impulses_pos: np.ndarray,
+    impulses_sign: np.ndarray,
+    init_impulses_gain: np.ndarray,
+    noise_len_samples: int,
+    average_density: float,
+    fs: int,
+    decay_L_dB: float = -60.0,
+    gain_deviation_factor: float = 2.0, # Corresponds to +/- 6dB (chi=2)
+    freq_min: float = 20.0,
+    freq_max: float = 20000.0,
+    num_freq_points: int = 200,
+    optimizer_options: Optional[dict] = None
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Optimizes VNS impulse locations (tau) and gains (gamma) for flatness.
+
+    Args:
+        tau_init: Initial integer impulse locations.
+        sigma: Impulse signs (fixed during optimization).
+        gamma_init: Initial impulse gains.
+        Ls: Total filter length in samples.
+        Ta: Grid size (for constraints).
+        fs: Sampling rate.
+        decay_L_dB: Target decay for gain constraints.
+        gain_deviation_factor: Allowed gain multiplier/divisor (chi).
+        freq_min: Minimum frequency for evaluation.
+        freq_max: Maximum frequency for evaluation (<= fs/2).
+        num_freq_points: Number of log-spaced points for evaluation.
+        optimizer_options: Dictionary of options for scipy.optimize.minimize.
+
+    Returns:
+        tau_opt_int: Optimized integer impulse locations.
+        gamma_opt: Optimized impulse gains.
+    """
+    num_of_impulses = len(init_impulses_pos)
+    if num_of_impulses <= 1:
+        print("Warning: Cannot optimize sequence with <= 1 impulse.")
+        return init_impulses_pos, init_impulses_gain
+
+    freq_max = min(freq_max, fs / 2.0 - 1e-6) # Ensure below Nyquist
+    # Logarithmically spaced frequencies for evaluation (Eq. 11)
+    log_freqs = np.geomspace(freq_min, freq_max, num_freq_points) # create an array of "geometrically space" values. Each value are separated by a ratio.
+
+    alpha = _calculate_alpha(decay_L_dB, noise_len_samples)
+
+    # Optimization variables: Combine continuous tau and gamma
+    # Exclude tau[0]=0 and gamma[0]=1 (fixed normalization)
+    impulses_pos_cont_init = init_impulses_pos[1:].astype(float)
+    gain_multiplier_init = np.ones(num_of_impulses-1) # Multiplier relative to target gain
+
+    # Initial packed variables [tau_cont[1:], ..., tau_cont[M-1], gamma_mult[1:], ..., gamma_mult[M-1]]
+    x0 = np.concatenate((impulses_pos_cont_init, gain_multiplier_init))
+
+    # Fixed parameters to pass to objective function
+    fixed_params = {
+        "sigma": impulses_sign,
+        "alpha": alpha,
+        "log_freqs": log_freqs,
+        "fs": fs,
+        "M": num_of_impulses,
+        "gain_deviation_factor": gain_deviation_factor,
+        "tau0": init_impulses_pos[0], # Should be 0
+        "gamma0_target": init_impulses_gain[0] # Should be 1.0 or close
+    }
+
+    
+
     # --- Define Bounds and Constraints (Eq. 16) ---
     bounds = []
     # Tau bounds: Ta*(m-1) < tau_cont[m] <= Ta*m (for m=1..M-1)
     # Need small epsilon because optimizer might hit exact boundary otherwise.
     eps_tau = 1e-6
-    tau_lower_bounds = Ta * np.arange(M - 1) + eps_tau
-    tau_upper_bounds = Ta * (np.arange(M - 1) + 1)
+    tau_lower_bounds = average_density * np.arange(num_of_impulses - 1) + eps_tau
+    tau_upper_bounds = average_density * (np.arange(num_of_impulses - 1) + 1)
     # Clip bounds to valid sample range [0, Ls-1]
     tau_lower_bounds = np.maximum(0.0, tau_lower_bounds)
-    tau_upper_bounds = np.minimum(Ls - 1.0, tau_upper_bounds)
-    for i in range(M - 1):
+    tau_upper_bounds = np.minimum(noise_len_samples - 1.0, tau_upper_bounds)
+    for i in range(num_of_impulses - 1):
          bounds.append((tau_lower_bounds[i], tau_upper_bounds[i]))
 
     # Gamma multiplier bounds: 1/chi <= gamma_mult[m] <= chi (for m=1..M-1)
     gamma_lower_bound = 1.0 / gain_deviation_factor
     gamma_upper_bound = gain_deviation_factor
-    for _ in range(M - 1):
+    for _ in range(num_of_impulses - 1):
         bounds.append((gamma_lower_bound, gamma_upper_bound))
 
     # --- Run Optimization ---
@@ -287,25 +307,25 @@ def optimize_vns(
 
     # --- Unpack and Round Results ---
     x_opt = result.x
-    mid = M - 1
+    mid = num_of_impulses - 1
     tau_cont_opt = np.concatenate(([fixed_params["tau0"]], x_opt[:mid]))
-    gamma_mult_opt = np.concatenate(([1.0], x_opt[mid:]))
+    opt_impulses_gain = np.concatenate(([1.0], x_opt[mid:]))
 
     # Round taus to nearest integer (Eq. 18 implied)
-    tau_opt_int = np.round(tau_cont_opt).astype(int)
+    opt_impulses_pos = np.round(tau_cont_opt).astype(int)
     # Ensure unique integer locations after rounding
-    tau_opt_int, unique_idx = np.unique(tau_opt_int, return_index=True)
+    opt_impulses_pos, unique_idx = np.unique(opt_impulses_pos, return_index=True)
     # Keep corresponding sigmas and multipliers
-    sigma_opt = sigma[unique_idx]
-    gamma_mult_opt = gamma_mult_opt[unique_idx]
+    opt_impulses_sign = impulses_sign[unique_idx]
+    opt_impulses_gain = opt_impulses_gain[unique_idx]
     # Update M
-    M_opt = len(tau_opt_int)
+    M_opt = len(opt_impulses_pos)
 
     # Recalculate final optimized gammas using the *integer* taus
-    target_gammas_opt = _calculate_target_gain(tau_opt_int.astype(float), alpha)
+    target_gammas_opt = _calculate_target_gain(opt_impulses_pos.astype(float), alpha)
     # Ensure gamma0 target is correct if tau[0] somehow changed (shouldn't)
-    target_gammas_opt[0] = _calculate_target_gain(tau_opt_int[0].astype(float), alpha)
-    gamma_opt = gamma_mult_opt * target_gammas_opt
+    target_gammas_opt[0] = _calculate_target_gain(opt_impulses_pos[0].astype(float), alpha)
+    gamma_opt = opt_impulses_gain * target_gammas_opt
 
     # Renormalize first gain to +/- 1 as per Fig 2 constraint description
     # Note: Paper Eq 16 says gamma(0)=1, but implies fixed sign.
@@ -314,7 +334,7 @@ def optimize_vns(
          gamma_opt = gamma_opt / np.abs(gamma_opt[0])
 
 
-    return tau_opt_int, sigma_opt, gamma_opt
+    return opt_impulses_pos, opt_impulses_sign, gamma_opt
 
 
 # --- Sparse Convolution ---
@@ -543,22 +563,22 @@ if __name__ == "__main__":
 
     # 1. Generate Initial EVN
     print("Generating initial EVN...")
-    tau_evn, sigma_evn, gamma_evn, Ls, Ta = generate_evn(
+    evn_pos, evn_sign, env_gain, len_samples, average_spacing = generate_evn(
         duration_sec=duration,
         density_Nd=density,
         fs=fs,
         decay_L_dB=decay_db
     )
-    print(f"Generated EVN with M={len(tau_evn)} impulses, Ls={Ls} samples.")
+    print(f"Generated EVN with M={len(evn_pos)} impulses, Ls={len_samples} samples.")
 
     # 2. Optimize to OVN
     print("\nOptimizing VNS...")
     tau_ovn, sigma_ovn, gamma_ovn = optimize_vns(
-        tau_init=tau_evn,
-        sigma=sigma_evn,
-        gamma_init=gamma_evn,
-        Ls=Ls,
-        Ta=Ta,
+        init_impulses_pos=evn_pos,
+        impulses_sign=evn_sign,
+        init_impulses_gain=env_gain,
+        noise_len_samples=len_samples,
+        average_density=average_spacing,
         fs=fs,
         decay_L_dB=decay_db,
         gain_deviation_factor=gain_dev_factor,
@@ -569,7 +589,7 @@ if __name__ == "__main__":
     # 3. Analyze and Compare Responses
     print("\nAnalyzing frequency responses...")
     freqs = np.geomspace(20, fs / 2, 500)
-    mag_evn = calculate_magnitude_response(tau_evn, sigma_evn, gamma_evn, freqs, fs)
+    mag_evn = calculate_magnitude_response(evn_pos, evn_sign, env_gain, freqs, fs)
     mag_ovn = calculate_magnitude_response(tau_ovn, sigma_ovn, gamma_ovn, freqs, fs)
 
     db_evn = 20 * np.log10(mag_evn + 1e-9)
@@ -587,7 +607,7 @@ if __name__ == "__main__":
 
     # Impulse Responses (like Fig 1)
     plt.subplot(3, 1, 1)
-    markerline_evn, stemlines_evn, _ = plt.stem(tau_evn / fs * 1000, sigma_evn * gamma_evn, linefmt='C0-', markerfmt='C0o', basefmt=' ', label=f'EVN (M={len(tau_evn)})')
+    markerline_evn, stemlines_evn, _ = plt.stem(evn_pos / fs * 1000, evn_sign * env_gain, linefmt='C0-', markerfmt='C0o', basefmt=' ', label=f'EVN (M={len(evn_pos)})')
     plt.setp(stemlines_evn, 'linewidth', 0.5)
     plt.setp(markerline_evn, 'markersize', 4)
     markerline_ovn, stemlines_ovn, _ = plt.stem(tau_ovn / fs * 1000, sigma_ovn * gamma_ovn, linefmt='C1--', markerfmt='C1x', basefmt=' ')
@@ -634,11 +654,11 @@ if __name__ == "__main__":
     # Sparse method
     import time
     start_sparse = time.time()
-    output_sparse = sparse_convolve(signal, tau_ovn, sigma_ovn, gamma_ovn, Ls)
+    output_sparse = sparse_convolve(signal, tau_ovn, sigma_ovn, gamma_ovn, len_samples)
     time_sparse = time.time() - start_sparse
 
     # Dense method (for comparison)
-    h_ovn_dense = np.zeros(Ls)
+    h_ovn_dense = np.zeros(len_samples)
     h_ovn_dense[tau_ovn] = sigma_ovn * gamma_ovn
     start_dense = time.time()
     output_dense = scipy.signal.convolve(signal, h_ovn_dense, mode='full')
@@ -663,11 +683,11 @@ if __name__ == "__main__":
 
     if len(all_sequences) >= 2:
         print("\nFinding best pair based on coherence and flatness...")
-        idx_a, idx_b, metric = find_best_pair(all_sequences, Ls, fs, lambda_coherence=0.8)
+        idx_a, idx_b, metric = find_best_pair(all_sequences, len_samples, fs, lambda_coherence=0.8)
         print(f"Best pair found: Sequence {idx_a} and Sequence {idx_b}")
         print(f"Combined Metric (Eq. 23): {metric:.4f}")
 
-        mean_coh, band_coh = calculate_coherence(all_sequences[idx_a], all_sequences[idx_b], Ls, fs)
+        mean_coh, band_coh = calculate_coherence(all_sequences[idx_a], all_sequences[idx_b], len_samples, fs)
         print(f"Mean Absolute Coherence of best pair: {mean_coh:.4f}")
 
         # Plot coherence of best pair
@@ -680,3 +700,35 @@ if __name__ == "__main__":
         plt.grid(True, which='both', linestyle=':', alpha=0.6)
         plt.ylim(0, 1)
         plt.show()
+
+# Explanation and Key Points:
+
+# EVN Generation (generate_evn): Implements equations 1-6 to create the initial exponentially decaying velvet noise based on density, duration, and decay rate. It handles potential edge cases like zero impulses.
+
+# Magnitude Response (calculate_magnitude_response): Efficiently calculates the frequency response using complex exponentials and numpy broadcasting.
+
+# Third-Octave Smoothing (third_octave_smoothing): Approximates the smoothing described in the paper (Eq. 11-14) using a moving average filter on the logarithmically spaced dB magnitude response. The window size is chosen to approximate 1/3 octave. Note: This is a simplification of potentially more complex filter-bank based smoothing, but captures the essence for the RMSE calculation.
+
+# Objective Function (objective_function): Calculates the RMSE of the smoothed dB response relative to its mean (Eq. 15), which the optimizer aims to minimize. It unpacks the optimization variables (continuous taus and gain multipliers).
+
+# Optimization (optimize_vns):
+
+# Sets up the optimization problem for scipy.optimize.minimize.
+
+# Variables: Continuous locations τ̃[1:] and gain multipliers γ_mult[1:] are packed into a single vector x.
+
+# Bounds: Constraints from Eq. 16 (time boundaries based on Ta, gain deviation based on chi) are implemented using the bounds argument.
+
+# Method: SLSQP is chosen as it handles constraints and bounds. trust-constr is another good option.
+
+# Post-processing: The optimized continuous locations τ̃ are rounded to the nearest integer τ. Gains γ are recalculated using these integer τ and the optimized multipliers. The first gain is normalized to magnitude 1. Uniqueness of integer taus is ensured.
+
+# Sparse Convolution (sparse_convolve): Implements the efficient convolution described by Eq. 7, avoiding multiplications/additions with zeros. Much faster than dense convolution for sparse filters.
+
+# Coherence (get_third_octave_bands, calculate_coherence): Calculates the frequency mean absolute coherence (Eq. 21) by approximating the per-band correlation (Eq. 20). It uses FFTs and sums power/cross-power within 1/3 octave bands. Note: This FFT-based method is an approximation of filtering the actual time-domain impulse responses.
+
+# Pair Selection (find_best_pair): Iterates through pairs of generated OVN sequences, calculates their coherence and flatness (using the objective function value), and finds the pair minimizing the combined metric from Eq. 23.
+
+# Example Usage (if __name__ == "__main__":): Demonstrates the workflow: generating EVN, optimizing to OVN, comparing frequency responses, showing sparse convolution speedup, and finding a good decorrelating pair.
+
+# This implementation provides a functional version of the algorithm described in the paper. You can adjust parameters like duration, density, decay, and optimization settings to explore different results.

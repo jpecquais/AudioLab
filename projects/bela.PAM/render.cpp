@@ -205,6 +205,26 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
+/**
+ * @brief Cleans up allocated resources for audio buffers.
+ *
+ * This function is called to release memory allocated for the audio buffers
+ * used during the program's execution. It ensures that all dynamically
+ * allocated memory is properly deallocated to prevent memory leaks.
+ *
+ * @param context A pointer to the BelaContext structure, which contains
+ *                information about the audio and sensor context. This parameter
+ *                is not used in this function.
+ * @param userData A pointer to user-defined data. This parameter is not used
+ *                 in this function.
+ *
+ * The function performs the following cleanup steps:
+ * - Iterates over the stereo channels and deletes the memory allocated for
+ *   `theBuffer` and `bypassBuffer` for each channel.
+ * - Sets the pointers for each channel in `theBuffer` and `bypassBuffer` to `nullptr`.
+ * - Deletes the arrays `theBuffer` and `bypassBuffer`.
+ * - Sets the pointers `theBuffer` and `bypassBuffer` to `nullptr`.
+ */
 void cleanup(BelaContext *context, void *userData)
 {
 	for (int i=0; i<CHANNEL::STEREO;i++){

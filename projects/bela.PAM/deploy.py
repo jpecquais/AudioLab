@@ -8,7 +8,7 @@ from pathlib import Path
 from fabric import Connection, task
 
 # Define paths and constants
-PROJECT_ROOT = Path('./') #TODO: directory of this script!
+PROJECT_ROOT = Path(__file__)
 DSP_FOLDER = PROJECT_ROOT / 'dsp'
 SOURCE_FOLDER = PROJECT_ROOT / 'sources'
 LIBRARY_FOLDER = PROJECT_ROOT/'../../cpp'

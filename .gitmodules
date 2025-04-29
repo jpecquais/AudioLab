@@ -4,3 +4,6 @@
 [submodule "third-party/daisy/DaisySP"]
 	path = third-party/daisy/DaisySP
 	url = https://github.com/electro-smith/DaisySP.git
+[submodule "projects/bela.PAM/lib/Partitioned-Convolution"]
+	path = projects/bela.PAM/lib/Partitioned-Convolution
+	url = https://github.com/michaelkrzyzaniak/Partitioned-Convolution.git

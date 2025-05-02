@@ -15,6 +15,11 @@ public:
         return m_value;
     }
 
+    inline T* get()
+    {
+        return &m_value;
+    }
+
     T getMaximum(){
         return m_max;
     }

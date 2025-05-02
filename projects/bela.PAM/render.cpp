@@ -44,12 +44,7 @@ enum CHANNEL{
 static float** theBuffer = nullptr; //main buffer
 static float** bypassBuffer = nullptr; //to bypass effects.
 
-// Additionnal pointers to handle dynamic routing
-static float** amp_input_buffer = nullptr;
-static float** amp_output_buffer = nullptr;
-static float** cabinet_input_buffer = nullptr;
-static float** cabinet_output_buffer = nullptr;
-static std::vector<float> cabinet_impulse_response;
+// static std::vector<float> cabinet_impulse_response;
 
 //Instanciation of main dsp objects
 #ifdef DEBUG
@@ -63,54 +58,18 @@ static ZeroLatencyConvolution zeCabinet;
 static PamRotaryEffect theRotary;
 static Gain<float,CHANNEL::STEREO> theOutputGain;
 
-void BypassStateFunction(int state, float**& input_buffer, float**& output_buffer)
-{
-    if (state)
-    {
-        input_buffer = theBuffer;
-        output_buffer = theBuffer;
-    }
-    else
-    {
-        input_buffer = bypassBuffer;
-        output_buffer = bypassBuffer;
-    }
-}
-
-using BypassCallback = std::function<void(int)>;
-BypassCallback set_amp_bypass_state = [](int state)
-{
-    BypassStateFunction(state, amp_input_buffer, amp_output_buffer);
-};
-BypassCallback set_cab_bypass_state = [](int state)
-{
-	BypassStateFunction(state, cabinet_input_buffer, cabinet_output_buffer);
-};
-
-using GainCallback = std::function<void(float)>;
-GainCallback set_output_gain = [](float new_val)
-{
-	theOutputGain.set(new_val);
-};
-static float totalOutputGain = OUTPUT_GAIN;
-
 //Define DSP Controller
 static MapUI theUI;
 static FAUSTParameter<float> mix(&theUI,"mix",20.f,0.f,100.f);
 static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
 static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
-static CallbackParameter<float,GainCallback> outputGain(set_output_gain,"OutputGain",1.f,0.f,1.f);
-static CallbackParameter<float,BypassCallback> amp_bypass(set_amp_bypass_state,"bypass_amp",0,0,1);
-static CallbackParameter<float,BypassCallback> cab_bypass(set_cab_bypass_state,"bypass_cab",0,0,1);
+static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
+static Parameter<float> amp_bypass("bypass_amp",0,0,1);
 
 //Define MIDI
 static Midi theMidi;
 static std::array<IParameter<float>*,128> Parameters;
 static void midiCallback(MidiChannelMessage message, void *arg);
-
-//Forward declaration
-void computeOutputGain(); // <-- Callback to compute the output gain.
-						  // 	 Should optimize the CPU load in the render function
 
 bool setup(BelaContext *context, void *userData)
 {
@@ -131,39 +90,33 @@ bool setup(BelaContext *context, void *userData)
 
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
-
-	//Load impulse response
-	cabinet_impulse_response = AudioFileUtilities::loadMono(IMPULSE_RESPONSE_PATH);
 	
 	//Bind parameters to midi CC number.
 	Parameters[0] = &mix;
 	Parameters[1] = &slowFastMode;
 	Parameters[2] = &breakMode;
 	Parameters[3] = &amp_bypass;
-	Parameters[4] = &cab_bypass;
 	Parameters[7] = &outputGain;
 	
 	//Init dsp blocks
 	theInputSection.setup(current_sample_rate,current_buffer_size,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
 	theAmp.setup(current_buffer_size);
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, current_buffer_size, MAX_IMPULSE_LENGTH);
-	zeCabinet.init(cabinet_impulse_response.data(),cabinet_impulse_response.size(),context->audioFrames);
 	theRotary.init(current_sample_rate);
 	theRotary.buildUserInterface(&theUI);
-	theOutputGain.setup(current_buffer_size,0.7);
+	theOutputGain.setup(outputGain.get(),current_buffer_size,0.7);
 
 	//allocate buffers
 	theBuffer = new float*[CHANNEL::STEREO];
-	bypassBuffer = new float*[CHANNEL::STEREO];
-	for (int i = 0; i < CHANNEL::STEREO; i++) {
-		theBuffer[i] = new float[current_buffer_size];
-		bypassBuffer[i] = new float[current_buffer_size];
-	}
+	for (size_t ch = 0; ch < CHANNEL::STEREO; ch++)
+	{
+		theBuffer[ch] = new float[current_buffer_size];
+		for (size_t smpl = 0; smpl < current_buffer_size; smpl++)
+		{
+			theBuffer[ch][smpl] = 0;
+		}
 
-	amp_input_buffer = theBuffer;
-	amp_output_buffer = theBuffer;
-	cabinet_input_buffer = theBuffer;
-	cabinet_output_buffer = theBuffer;
+	}
 
 	return true;
 }
@@ -172,8 +125,11 @@ void render(BelaContext *context, void *userData)
 {
 	bela_uninterleaved_input_buffer<float>(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
 	theInputSection.process(theBuffer,theBuffer); //1-2% BELA CPU
-	theAmp.process(amp_input_buffer,amp_output_buffer); // 50-55% BELA CPU
-	theCabinet.process(cabinet_input_buffer[0],cabinet_output_buffer[0],context->audioFrames); // 20% BELA CPU
+	if(amp_bypass.getValue()==0)
+	{
+		theAmp.process(theBuffer,theBuffer); // 50-55% BELA CPU
+		theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames); // 20% BELA CPU
+	}
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
 	theOutputGain.process(theBuffer,theBuffer); //Almost uncountable.
 	
@@ -201,18 +157,6 @@ void cleanup(BelaContext *context, void *userData)
 	bypassBuffer = nullptr;
 }
 
-
-/**
- * @brief Handles MIDI messages.
- *
- * This function processes MIDI messages and updates the corresponding parameters
- * based on the MIDI CC numbers.
- * 
- * The CC numbers correspond to the index of the parameter in the parameters list.
- *
- * @param message The MIDI message received.
- * @param arg Pointer to additional arguments (typically the MIDI port).
- */
 void midiCallback(MidiChannelMessage message, void *arg){
 	#ifdef DEBUG_CTRL
 	rt_printf("MIDI Channel: %i \n",message.getChannel());
@@ -229,17 +173,5 @@ void midiCallback(MidiChannelMessage message, void *arg){
 		rt_printf("Is a valid CC\n");
 		#endif
 		currParam->setValueFromMidi(message.getDataByte(1));
-		if (currParam->hasCallback()) currParam->invokeCallback();
 	}
-}
-
-
-/**
- * @brief Computes the global output gain.
- *
- * This function calculates the global output gain based on the current values
- * of the output gain and drive parameters.
- */
-void computeOutputGain(){
-	totalOutputGain = OUTPUT_GAIN*outputGain.getValue();
 }

@@ -4,23 +4,19 @@ template <class T, int num_input_output_channels>
 class Gain
 {
 public:
-    Gain():block_size(32),m_value(1),m_target_value(1),m_interpolation_factor(0.7){}
+    Gain():block_size(32),m_value(1),target_value_(nullptr),m_interpolation_factor(0.7){}
     ~Gain() = default;
 
-    void setup(int new_block_size, T new_interpolation_factor)
+    void setup(T* input_param, int new_block_size, T new_interpolation_factor)
     {
+        target_value_ = input_param;
         block_size = new_block_size;
         m_interpolation_factor = 1-new_interpolation_factor;
     }
 
-    void set(T new_value)
-    {
-        m_target_value = new_value;
-    }
-
     T process(T input_sample)
     {
-        m_value += (m_target_value-m_value)*m_interpolation_factor;
+        m_value += (*target_value_-m_value)*m_interpolation_factor;
         return input_sample*m_value;
     }
 
@@ -38,7 +34,8 @@ public:
 private:
     int block_size;
     int m_num_input_output_channels = num_input_output_channels;
-    T m_value, m_target_value, m_interpolation_factor;
+    T m_value, m_interpolation_factor;
+    T* target_value_;
     std::vector<T> m_env;
 
 };

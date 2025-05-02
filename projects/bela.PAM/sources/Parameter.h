@@ -35,6 +35,16 @@ public:
         setValue(((t_value/127.)*(m_max-m_min))+m_min);
     }
 
+    inline const bool hasCallback() const
+    {
+        return m_hasCallback;
+    }
+
+    inline void invokeCallback()
+    {
+        m_callback();
+    }
+
 protected:
     std::string m_name;
     T m_value, m_min, m_max, m_default;

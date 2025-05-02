@@ -3,6 +3,7 @@
 #include <libraries/Convolver/Convolver.h>
 #include <libraries/AudioFile/AudioFile.h>
 #include <libraries/Midi/Midi.h>
+#include <libraries/AudioFile/AudioFile.h>
 #include "sources/math.h"
 #include "sources/amp.h"
 #include "sources/input.h"
@@ -10,6 +11,7 @@
 #include "sources/Parameter.h"
 #include "sources/buffer_helper.h"
 #include "sources/gain.h"
+#include "sources/zero_latency_convolution.hpp"
 
 
 //Debug mode
@@ -47,6 +49,7 @@ static float** amp_input_buffer = nullptr;
 static float** amp_output_buffer = nullptr;
 static float** cabinet_input_buffer = nullptr;
 static float** cabinet_output_buffer = nullptr;
+static std::vector<float> cabinet_impulse_response;
 
 //Instanciation of main dsp objects
 #ifdef DEBUG
@@ -56,6 +59,7 @@ Scope scope;
 static InputSection<float> theInputSection;
 static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
+static ZeroLatencyConvolution zeCabinet;
 static PamRotaryEffect theRotary;
 static Gain<float,CHANNEL::STEREO> theOutputGain;
 
@@ -108,21 +112,6 @@ static void midiCallback(MidiChannelMessage message, void *arg);
 void computeOutputGain(); // <-- Callback to compute the output gain.
 						  // 	 Should optimize the CPU load in the render function
 
-/**
- * @brief Initializes the audio processing setup.
- *
- * This function sets up the audio context, initializes the input section,
- * amplifier, convolver, and rotary effect. It also sets up MIDI communication
- * and binds parameters to MIDI CC numbers.
- * 
- * To limit the number of computation in the main render function, the output gain
- * is computed inside a callback. We need to attach the callback to the parameters
- * that have an effect on the output gain.
- *
- * @param context Pointer to the BelaContext containing audio settings.
- * @param userData Pointer to user-defined data.
- * @return true if the setup is successful, false otherwise.
- */
 bool setup(BelaContext *context, void *userData)
 {
 	#ifdef DEBUG_AUDIO
@@ -143,19 +132,22 @@ bool setup(BelaContext *context, void *userData)
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
 
-
+	//Load impulse response
+	cabinet_impulse_response = AudioFileUtilities::loadMono(IMPULSE_RESPONSE_PATH);
+	
 	//Bind parameters to midi CC number.
-	ccToParameters[0] = &mix;
-	ccToParameters[1] = &slowFastMode;
-	ccToParameters[2] = &breakMode;
-	ccToParameters[3] = &amp_bypass;
-	ccToParameters[4] = &cab_bypass;
-	ccToParameters[7] = &outputGain;
-
+	Parameters[0] = &mix;
+	Parameters[1] = &slowFastMode;
+	Parameters[2] = &breakMode;
+	Parameters[3] = &amp_bypass;
+	Parameters[4] = &cab_bypass;
+	Parameters[7] = &outputGain;
+	
 	//Init dsp blocks
 	theInputSection.setup(current_sample_rate,current_buffer_size,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
 	theAmp.setup(current_buffer_size);
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, current_buffer_size, MAX_IMPULSE_LENGTH);
+	zeCabinet.init(cabinet_impulse_response.data(),cabinet_impulse_response.size(),context->audioFrames);
 	theRotary.init(current_sample_rate);
 	theRotary.buildUserInterface(&theUI);
 	theOutputGain.setup(current_buffer_size,0.7);
@@ -176,24 +168,14 @@ bool setup(BelaContext *context, void *userData)
 	return true;
 }
 
-/**
- * @brief Processes the audio in real-time.
- *
- * This function handles the audio processing for each frame. It reads audio input,
- * processes it through the input section, amplifier, convolver, and rotary effect,
- * and writes the output to the audio buffer.
- *
- * @param context Pointer to the BelaContext containing audio settings.
- * @param userData Pointer to user-defined data.
- */
 void render(BelaContext *context, void *userData)
 {
 	bela_uninterleaved_input_buffer<float>(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
-	theInputSection.process(theBuffer,theBuffer);
-	theAmp.process(amp_input_buffer,amp_output_buffer);
-	theCabinet.process(cabinet_input_buffer[0],cabinet_output_buffer[0],context->audioFrames);
+	theInputSection.process(theBuffer,theBuffer); //1-2% BELA CPU
+	theAmp.process(amp_input_buffer,amp_output_buffer); // 50-55% BELA CPU
+	theCabinet.process(cabinet_input_buffer[0],cabinet_output_buffer[0],context->audioFrames); // 20% BELA CPU
 	theRotary.compute(context->audioFrames,theBuffer,theBuffer);
-	theOutputGain.process(theBuffer,theBuffer);
+	theOutputGain.process(theBuffer,theBuffer); //Almost uncountable.
 	
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		#ifdef DEBUG_AUDIO
@@ -205,26 +187,6 @@ void render(BelaContext *context, void *userData)
 	}
 }
 
-/**
- * @brief Cleans up allocated resources for audio buffers.
- *
- * This function is called to release memory allocated for the audio buffers
- * used during the program's execution. It ensures that all dynamically
- * allocated memory is properly deallocated to prevent memory leaks.
- *
- * @param context A pointer to the BelaContext structure, which contains
- *                information about the audio and sensor context. This parameter
- *                is not used in this function.
- * @param userData A pointer to user-defined data. This parameter is not used
- *                 in this function.
- *
- * The function performs the following cleanup steps:
- * - Iterates over the stereo channels and deletes the memory allocated for
- *   `theBuffer` and `bypassBuffer` for each channel.
- * - Sets the pointers for each channel in `theBuffer` and `bypassBuffer` to `nullptr`.
- * - Deletes the arrays `theBuffer` and `bypassBuffer`.
- * - Sets the pointers `theBuffer` and `bypassBuffer` to `nullptr`.
- */
 void cleanup(BelaContext *context, void *userData)
 {
 	for (int i=0; i<CHANNEL::STEREO;i++){
@@ -279,5 +241,5 @@ void midiCallback(MidiChannelMessage message, void *arg){
  * of the output gain and drive parameters.
  */
 void computeOutputGain(){
-	totalOutputGain = OUTPUT_GAIN*outputGain.getValue()/drive.getValue();
+	totalOutputGain = OUTPUT_GAIN*outputGain.getValue();
 }

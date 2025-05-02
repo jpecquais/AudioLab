@@ -23,7 +23,7 @@
 #endif
 
 //Constant Declaration
-static constexpr unsigned int	MAX_IMPULSE_LENGTH			= 256;
+static constexpr unsigned int	MAX_IMPULSE_LENGTH			= 256; //Currently, it is the safe spot
 static constexpr unsigned int 	NEURAL_NETWORK_HIDDEN_SIZE  = 8;
 static constexpr int 			BLACKBIRD_POLARITY 			= 1;
 static constexpr int 			CONSTABLE_POLARITY 			= -1;

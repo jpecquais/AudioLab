@@ -8,9 +8,9 @@ from typing import List
 impulse, sample_rate = sf.read('projects/bela.PAM/ressources/impulses_responses/final_IR_1024.wav')
 
 # lambda_ = 0.15
-lambda_ = 0.75
+lambda_ = 0.65
 iir_order = 64
-fir_order = 128
+fir_order = 256
 
 def add_missing_complex_conjugate(array: np.ndarray):
     list = array.tolist()
@@ -48,10 +48,6 @@ def iir_to_fir(order,lambda_,impulse):
 impulse_for_fir = impulse#np.concatenate([impulse[:fir_order],np.zeros(len(impulse)-fir_order)])
 impulse_for_iir = impulse#np.concatenate([np.zeros(fir_order),impulse[fir_order:]])
 zpk_prony = iir_to_fir(iir_order,lambda_,impulse_for_iir)
-num_zp = fir_order//2
-index = num_zp//2
-
-sos_lowpass, sos_highpass = crossover(8,2000,fs=sample_rate)
 
 prony = signal.zpk2sos(zpk_prony[0],zpk_prony[1],zpk_prony[2])
 
@@ -59,7 +55,7 @@ prony = signal.zpk2sos(zpk_prony[0],zpk_prony[1],zpk_prony[2])
 
 # Calculate the frequency response of the original impulse response
 w_h, h_freq = signal.freqz(impulse, fs=sample_rate, worN=8192)
-w_h, h_freq_trunc = signal.freqz(impulse[:fir_order], fs=sample_rate, worN=8192)
+w_h, h_freq_trunc = signal.freqz(impulse[:fir_order]*np.blackman(2*fir_order)[fir_order:], fs=sample_rate, worN=8192)
 
 # Calculate the frequency response of the IIR filter
 w_iir, h_prony = signal.sosfreqz(prony, fs=sample_rate, worN=8192)

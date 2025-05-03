@@ -11,7 +11,6 @@
 #include "sources/Parameter.h"
 #include "sources/buffer_helper.h"
 #include "sources/gain.h"
-#include "sources/zero_latency_convolution.hpp"
 
 
 //Debug mode
@@ -54,7 +53,6 @@ Scope scope;
 static InputSection<float> theInputSection;
 static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
-static ZeroLatencyConvolution zeCabinet;
 static PamRotaryEffect theRotary;
 static Gain<float,CHANNEL::STEREO> theOutputGain;
 

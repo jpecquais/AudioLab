@@ -46,10 +46,11 @@ static float** bypassBuffer = nullptr; //to bypass effects.
 // static std::vector<float> cabinet_impulse_response;
 
 //Instanciation of main dsp objects
-#ifdef DEBUG
+#ifdef DEBUG_AUDIO
 Oscillator osc;
 Scope scope;
 #endif
+
 static InputSection<float> theInputSection;
 static Amp<float,NEURAL_NETWORK_HIDDEN_SIZE> theAmp;
 static Convolver theCabinet;
@@ -104,7 +105,7 @@ bool setup(BelaContext *context, void *userData)
 	theRotary.buildUserInterface(&theUI);
 	theOutputGain.setup(outputGain.get(),current_buffer_size,0.7);
 
-	//allocate buffers
+	//allocate buffer
 	theBuffer = new float*[CHANNEL::STEREO];
 	for (size_t ch = 0; ch < CHANNEL::STEREO; ch++)
 	{
@@ -133,11 +134,13 @@ void render(BelaContext *context, void *userData)
 	
 	for(unsigned int n = 0; n < context->audioFrames; n++) {
 		#ifdef DEBUG_AUDIO
-		scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
+			scope.log(theBuffer[CHANNEL::LEFT][n], theBuffer[CHANNEL::RIGHT][n]);
+			audioWrite(context, n, CHANNEL::LEFT, osc.process()*OUTPUT_GAIN);
+			audioWrite(context, n, CHANNEL::RIGHT, osc.process()*OUTPUT_GAIN);
+		#else
+			audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]*OUTPUT_GAIN);
+			audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]*OUTPUT_GAIN);
 		#endif
-
-		audioWrite(context, n, CHANNEL::LEFT, theBuffer[CHANNEL::LEFT][n]*OUTPUT_GAIN);
-		audioWrite(context, n, CHANNEL::RIGHT, theBuffer[CHANNEL::RIGHT][n]*OUTPUT_GAIN);
 	}
 }
 

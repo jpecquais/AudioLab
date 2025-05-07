@@ -4,7 +4,7 @@ template <class T, int num_input_output_channels>
 class Gain
 {
 public:
-    Gain():block_size(32),m_value(1),target_value_(nullptr),m_interpolation_factor(0.7){}
+    Gain():block_size(32),m_value(1),m_interpolation_factor(0.7),target_value_(nullptr){}
     ~Gain() = default;
 
     void setup(T* input_param, int new_block_size, T new_interpolation_factor)

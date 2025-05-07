@@ -12,12 +12,35 @@ public:
     InputSection() : m_numAllpasses_1{NUM_BIQUAD_1},m_numAllpasses_2{NUM_BIQUAD_1}{}
     ~InputSection() = default;
 
-    void setup(T fs, int new_block_size, T t_gainIn1, T t_gainIn2){
+    struct StateChannel
+    {
+        T gain_in_1;
+        T gain_in_2;
+    };
+
+    StateChannel clean_channel, drive_channel;
+
+    void setup(T fs, int new_block_size)
+    {
+        float blackbird_input_gain_clean = db2linear<float>(-12.f);
+        float constable_input_gain_clean = -1 * db2linear<float>(0.f);
+        
+        float blackbird_input_gain_drive = db2linear<float>(-12.f);
+        float constable_input_gain_drive = db2linear<float>(0.f);
+
+        clean_channel.gain_in_1 = blackbird_input_gain_clean;
+        clean_channel.gain_in_2 = constable_input_gain_clean;
+        
+        drive_channel.gain_in_1 = blackbird_input_gain_drive;
+        drive_channel.gain_in_2 = constable_input_gain_drive;
+
+        m_gainIn1 = clean_channel.gain_in_1;
+        m_gainIn2 = clean_channel.gain_in_2;
+
         m_fs = fs;
         block_size = new_block_size;
         m_ts = 1./fs;
-        m_gainIn1 = t_gainIn1;
-        m_gainIn2 = t_gainIn2;
+
         initAllpassesParameters();
         computeBiquadCoefficients();
     }
@@ -26,7 +49,6 @@ public:
         T in1 = t_in1;
         T in2 = t_in2;
 
-        //TODO: Filtering is broken
         for (int i=0;i<m_numAllpasses_1;i++){
             in1 = biquads[i].process(in1);
             in2 = biquads[i+m_numAllpasses_1].process(in2);
@@ -45,6 +67,20 @@ public:
         {
             output_buffer[0][i] = process(input_buffer[0][i],input_buffer[1][i]);
             output_buffer[1][i] = 0;
+        }
+    }
+
+    void toggle_channels(float drive_state)
+    {
+        if (drive_state > 0)
+        {
+            m_gainIn1 = drive_channel.gain_in_1;
+            m_gainIn2 = drive_channel.gain_in_2;
+        }
+        else
+        {
+            m_gainIn1 = clean_channel.gain_in_1;
+            m_gainIn2 = clean_channel.gain_in_2;
         }
     }
 
@@ -88,5 +124,4 @@ private:
             biquads[i].set(alpha,beta,1,beta,alpha);
         }
     }
-
 };

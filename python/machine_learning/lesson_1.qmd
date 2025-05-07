@@ -1,0 +1,121 @@
+# Deep learning with Pytorch
+
+## Introduction
+
+subset of machine learning
+
+Machine Learning
+def : turning data into numbers and finding patterns in those numbers.
+
+AI <- Machine Learning <- Deep learning
+
+Traditional Programing:
+
+Like receipe : 
+Input -> Rules -> Ouput
+(ingredient) -> (receipe) -> (dish)
+
+Machine Leaning
+Input + Output -> Figures out the rules
+
+Supervised learning
+
+## Why use machine learning ?
+
+-> For a complex problem, can you think of all the rules?
+
+"If you can build a simple rule-based system that doesn't require machine learning, do that"
+Rule 1 - Google's Machine Learning Handbook
+
+## What is it good for ?
+
++ Problems with long lists of rules
++ Continually changing environments
++ Discovering insights within large collection of data
+
+## What is it not good for ?
+
++ When you need explainability
+  + deep learning model can have billion of parameters
++ When traditional approach is a better option
++ When errors are unacceptable
+  + Models are propabilistic
++ WHen you don't have much data
+
+## Machine learning VS Deep learning
+
+Machine Learning apply on structured data
+Algorithm : gradient boosted machine
+Shallow algorithms
+
+Deep Learning better for unstructured data
+Algorithm : Neural network
+
+## Anatomy of Neural Network - What are neural networks
+
+3Blue1Brown video serie
+Neural Network from the ground up
+
+Inputs -> Numerical encoding -> Neural Network -> Representation outputs -> Outputs (human understandable)
+
+Anatomy :
+
+Input layer:
+num units / neurons
+
+Hidden layers
+num units/neurons
+
+Output layer:
+units / neurons
+
+## Types of Learning
+
+Supervised learning : lot of inputs and lot of output's examples (ground truth)
+
+Unsupervised & Self-supervised leaning : only have data
+
+Transfer learning : transfer already learned pattern from a model
+
+reinforcement learning :
+teach dog to catch a bone.
+
+## What is deep learning actually used for ?
+
+seq2seq
++ YT recommendation
++ Translation
++ Speech recognition
+
+classification/regression
++ Computer Vision
++ Natural Language Processing
+
+## What is Pytorch
+
+Deep learning framework
+
+## What is a tensor ?
+
+Asset of data
+input and output of Neural Network
+Dan Fleisch -> What's a Tensor
+
+```{python}
+
+```
+
+
+Neuron -> qqchose qui stock un nombre
+Niveau d'activation
+
+Sur une grille de 28*28 pixels
+Couche input 784 neurons, couche output 10 neurons
+
+Hidden layers
+2*16 neurons
+
+poids -> nombre affecté à la connexion entre les neuronnes de deux couches
+biais -> a quel point la somme des poids doit etre élevé pour que le neuronne s'active
+
+learning = trouver poids et biais

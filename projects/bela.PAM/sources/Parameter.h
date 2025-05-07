@@ -40,21 +40,11 @@ public:
         setValue(((t_value/127.)*(m_max-m_min))+m_min);
     }
 
-    inline const bool hasCallback() const
-    {
-        return m_hasCallback;
-    }
-
-    inline void invokeCallback()
-    {
-        m_callback();
-    }
+    virtual void invokeCallback(){}
 
 protected:
     std::string m_name;
     T m_value, m_min, m_max, m_default;
-    bool m_hasCallback;
-    std::function<void()> m_callback;
 };
 
 template <class T>
@@ -92,16 +82,16 @@ template <class T, class CallbackType>
 class CallbackParameter : public IParameter<T>
 {
 public:
-    CallbackParameter(CallbackType func, std::string t_name, T t_default, T t_min, T t_max):IParameter<T>(t_name, t_default, t_min, t_max),callback(func){}
+    CallbackParameter(CallbackType func, std::string t_name, T t_default, T t_min, T t_max):IParameter<T>(t_name, t_default, t_min, t_max),callback_(func){}
     ~CallbackParameter() = default;
 
     void setValue(T t_newVal)
     {
         this->m_value = t_newVal;
-        callback(this->m_value);
+        callback_(this->m_value);
     }
 
 private:
-    CallbackType callback;
+    CallbackType callback_;
 
 };

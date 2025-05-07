@@ -24,13 +24,9 @@
 //Constant Declaration
 static constexpr unsigned int	MAX_IMPULSE_LENGTH			= 256; //Currently, it is the safe spot
 static constexpr unsigned int 	NEURAL_NETWORK_HIDDEN_SIZE  = 8;
-static constexpr int 			BLACKBIRD_POLARITY 			= 1;
-static constexpr int 			CONSTABLE_POLARITY 			= -1;
 static constexpr int 			MIDI_CH						= 5;
 static constexpr int 			BELA_MIDI_CH				= MIDI_CH-1;  //Bela count midi channel from 0
 static const	 float	 		OUTPUT_GAIN 				= db2linear<float>(-12.f);
-static const 	 float	 		BLACKBIRD_INPUT_GAIN 		= db2linear<float>(-12.f)*BLACKBIRD_POLARITY;
-static const	 float	 		CONSTABLE_INPUT_GAIN 		= db2linear<float>(0.f)*CONSTABLE_POLARITY;
 static const	 std::string	MIDI_PORT					= "hw:1,0,0";
 static const	 std::string 	IMPULSE_RESPONSE_PATH 		= "ressources/impulses_responses/final_IR_1024.wav";
 
@@ -42,8 +38,6 @@ enum CHANNEL{
 
 static float** theBuffer = nullptr; //main buffer
 static float** bypassBuffer = nullptr; //to bypass effects.
-
-// static std::vector<float> cabinet_impulse_response;
 
 //Instanciation of main dsp objects
 #ifdef DEBUG_AUDIO
@@ -59,15 +53,12 @@ static Gain<float,CHANNEL::STEREO> theOutputGain;
 
 //Define DSP Controller
 static MapUI theUI;
-static FAUSTParameter<float> mix(&theUI,"mix",20.f,0.f,100.f);
-static FAUSTParameter<float> slowFastMode(&theUI,"slow_fast",0.f,0.f,1.f);
-static FAUSTParameter<float> breakMode(&theUI,"break",0.f,0.f,1.f);
-static Parameter<float> outputGain("OutputGain",1.f,0.f,1.f);
-static Parameter<float> amp_bypass("bypass_amp",0,0,1);
+
 
 //Define MIDI
 static Midi theMidi;
-static std::array<IParameter<float>*,128> Parameters;
+using pParameter = std::unique_ptr<IParameter<float>>;
+static std::array<pParameter,128> Parameters;
 static void midiCallback(MidiChannelMessage message, void *arg);
 
 bool setup(BelaContext *context, void *userData)
@@ -89,21 +80,21 @@ bool setup(BelaContext *context, void *userData)
 
 	//Attach parameter to MidiControler
 	theMidi.setParserCallback(&midiCallback, (void *)MIDI_PORT.c_str());	
-	
-	//Bind parameters to midi CC number.
-	Parameters[0] = &mix;
-	Parameters[1] = &slowFastMode;
-	Parameters[2] = &breakMode;
-	Parameters[3] = &amp_bypass;
-	Parameters[7] = &outputGain;
+
+	Parameters[0] = std::make_unique<FAUSTParameter<float>>(&theUI,"mix",20.f,0.f,100.f);
+	Parameters[1] = std::make_unique<FAUSTParameter<float>>(&theUI,"slow_fast",0.f,0.f,1.f);
+	Parameters[2] = std::make_unique<FAUSTParameter<float>>(&theUI,"break",0.f,0.f,1.f);
+	Parameters[3] = std::make_unique<Parameter<float>>("bypass_amp",0,0,1);
+	Parameters[4] = std::make_unique<CallbackParameter<float, std::function<void(float)>>>([](float new_value){theInputSection.toggle_channels(new_value);},"toggle_channels",0,0,1);
+	Parameters[7] = std::make_unique<Parameter<float>>("OutputGain",1.f,0.f,1.f);
 	
 	//Init dsp blocks
-	theInputSection.setup(current_sample_rate,current_buffer_size,BLACKBIRD_INPUT_GAIN,CONSTABLE_INPUT_GAIN);
+	theInputSection.setup(current_sample_rate,current_buffer_size);
 	theAmp.setup(current_buffer_size);
 	theCabinet.setup(IMPULSE_RESPONSE_PATH, current_buffer_size, MAX_IMPULSE_LENGTH);
 	theRotary.init(current_sample_rate);
 	theRotary.buildUserInterface(&theUI);
-	theOutputGain.setup(outputGain.get(),current_buffer_size,0.7);
+	theOutputGain.setup(Parameters[7]->get(),current_buffer_size,0.7);
 
 	//allocate buffer
 	theBuffer = new float*[CHANNEL::STEREO];
@@ -124,7 +115,7 @@ void render(BelaContext *context, void *userData)
 {
 	bela_uninterleaved_input_buffer<float>(context->audioIn,theBuffer,CHANNEL::STEREO,context->audioFrames);
 	theInputSection.process(theBuffer,theBuffer); //1-2% BELA CPU
-	if(amp_bypass.getValue()==0)
+	if(Parameters[3]->getValue()==0)
 	{
 		theAmp.process(theBuffer,theBuffer); // 50-55% BELA CPU
 		theCabinet.process(theBuffer[0],theBuffer[0],context->audioFrames); // 20% BELA CPU

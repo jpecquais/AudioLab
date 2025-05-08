@@ -44,7 +44,7 @@ static void interleave_buffer(float** source_buffer, float* target_buffer, int n
 
 static daisy::SaiHandle::Config::SampleRate sample_rate_to_enum(float sample_rate)
 {
-    if (sample_rate == 8000) return daisy::SaiHandle::Config::SampleRate::SAI_8KHZ;
+    if      (sample_rate == 8000)  return daisy::SaiHandle::Config::SampleRate::SAI_8KHZ;
     else if (sample_rate == 16000) return daisy::SaiHandle::Config::SampleRate::SAI_16KHZ;
     else if (sample_rate == 32000) return daisy::SaiHandle::Config::SampleRate::SAI_32KHZ;
     else if (sample_rate == 48000) return daisy::SaiHandle::Config::SampleRate::SAI_48KHZ;

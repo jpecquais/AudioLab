@@ -3,3 +3,4 @@ build
 .DS_Store
 *-svg
 .vscode
+third-party/daisy/seed

@@ -17,6 +17,12 @@ allpass_delay(max_del,del,gain,x) = +(del_x-gain*x)~(*(gain)) with {
     del_x = de.delay(max_del,del,x);
 };
 
+allpass_2nd(fx,B) = fi.tf2(k2, k1*(1+k2), 1, k1*(1+k2), k2) with {
+    tanPiBT = tan(ma.PI*B/ma.SR);
+    k1 = 0.0 - cos(2.0*ma.PI*fx/ma.SR);
+    k2 = (1.0 - tanPiBT)/(1.0 + tanPiBT);
+};
+
 /////////////////////////////////////////////
 /*
 Crossover filter
